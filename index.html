@@ -9,6 +9,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -100,6 +102,7 @@
         .btn-success { background: #4CAF50; color: white; }
         .btn-danger { background: #f44336; color: white; }
         .btn-secondary { background: #757575; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
         .btn-back { background: #9E9E9E; color: white; }
         .btn-sm { padding: 10px 16px; font-size: 13px; width: auto; display: inline-flex; margin: 0; }
         
@@ -126,6 +129,7 @@
             justify-content: center;
             font-size: 24px;
             overflow: hidden;
+            flex-shrink: 0;
         }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .info-text { flex: 1; }
@@ -176,19 +180,19 @@
         .rating-content {
             background: white;
             border-radius: 28px;
-            padding: 24px;
-            width: 90%;
-            max-width: 350px;
+            padding: 20px;
+            width: 85%;
+            max-width: 320px;
             text-align: center;
         }
         .stars {
             display: flex;
             justify-content: center;
             gap: 12px;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         .stars i {
-            font-size: 40px;
+            font-size: 32px;
             color: #ddd;
             cursor: pointer;
             transition: all 0.2s;
@@ -196,35 +200,35 @@
         .stars i.active, .stars i:hover { color: #FFD700; transform: scale(1.1); }
         .rating-review {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #eee;
-            border-radius: 20px;
-            margin: 12px 0;
+            border-radius: 16px;
+            margin: 10px 0;
             font-family: inherit;
             resize: vertical;
+            font-size: 13px;
         }
         
         .hidden { display: none; }
-        .loading { text-align: center; padding: 30px; color: #FFD700; }
         .error { background: #FFEBEE; color: #c62828; padding: 12px; border-radius: 16px; margin-top: 10px; font-size: 13px; }
         .success { background: #E8F5E9; color: #2E7D32; padding: 12px; border-radius: 16px; margin-top: 10px; }
         
         .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
         .profile-avatar-lg {
-            width: 100px;
-            height: 100px;
-            border-radius: 50px;
+            width: 80px;
+            height: 80px;
+            border-radius: 40px;
             background: #FFD700;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
+            margin: 0 auto 12px;
             cursor: pointer;
             overflow: hidden;
         }
         .profile-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-avatar-lg span { font-size: 48px; }
-        canvas { max-height: 250px; width: 100%; background: white; border-radius: 16px; padding: 8px; margin-top: 10px; }
+        .profile-avatar-lg span { font-size: 40px; }
+        canvas { max-height: 200px; width: 100%; background: white; border-radius: 16px; padding: 8px; margin-top: 10px; }
         
         .infoModal {
             display: none;
@@ -238,12 +242,12 @@
         }
         .infoModal-content {
             background: white;
-            border-radius: 28px;
-            padding: 24px;
-            width: 90%;
-            max-width: 350px;
+            border-radius: 24px;
+            padding: 16px;
+            width: 85%;
+            max-width: 300px;
             text-align: center;
-            border-top: 5px solid #FFD700;
+            border-top: 4px solid #FFD700;
         }
         .infoModal-avatar {
             width: 80px;
@@ -253,23 +257,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 15px;
+            margin: 0 auto 10px;
             font-size: 40px;
             overflow: hidden;
         }
+        .infoModal-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .infoModal-item {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #eee;
             text-align: left;
+            font-size: 12px;
         }
+        .infoModal-item span:first-child { font-weight: 600; color: #555; }
+        .infoModal-item span:last-child { color: #1a1a2e; font-weight: 500; }
         
-        .sort-buttons { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .sort-buttons { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
         .sort-btn {
             flex: 1;
-            padding: 8px;
-            font-size: 12px;
+            padding: 6px;
+            font-size: 11px;
             background: #f0f0f0;
             border: none;
             border-radius: 20px;
@@ -278,15 +286,16 @@
         }
         .sort-btn.active { background: #FFD700; }
         
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 16px; }
+        .tab-buttons { display: flex; gap: 8px; margin-bottom: 16px; }
         .tab-btn {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             background: #f0f0f0;
             border: none;
             border-radius: 30px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 13px;
             transition: all 0.2s;
         }
         .tab-btn.active { background: #FFD700; }
@@ -308,9 +317,9 @@
         .badge-selesai {
             background: #4CAF50;
             color: white;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 10px;
             display: inline-block;
             margin-left: 8px;
         }
@@ -318,30 +327,66 @@
         .badge-aktif {
             background: #FF9800;
             color: white;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 10px;
             display: inline-block;
             margin-left: 8px;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .login-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 32px;
+            padding: 32px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0,0,0,0.1);
-            border-top-color: #FFD700;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+
+        .role-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
         }
-        
+
+        .role-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #FFD700;
+            background: white;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .role-btn.active {
+            background: #FFD700;
+            color: #1a1a2e;
+        }
+
+        .rating-item {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .rating-stars {
+            color: #FFD700;
+            font-size: 12px;
+        }
+        .btn-edit-rating {
+            background: #FF9800;
+            color: white;
+            padding: 4px 8px;
+            font-size: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+            border: none;
+        }
+
         @media (max-width: 480px) {
             body { padding: 12px; padding-bottom: 80px; }
-            .card { padding: 16px; }
+            .card { padding: 14px; }
             .sort-buttons { flex-direction: column; }
             .tab-buttons { flex-direction: column; }
             .offer-actions { flex-direction: column; }
@@ -358,7 +403,7 @@
 
     <div id="ratingModal" class="rating-modal">
         <div class="rating-content">
-            <h3 id="ratingModalTitle">⭐ Beri Rating untuk Driver</h3>
+            <h3 id="ratingModalTitle" style="font-size:16px;">⭐ Beri Rating</h3>
             <div class="stars" id="starContainer">
                 <i class="far fa-star" data-rating="1"></i>
                 <i class="far fa-star" data-rating="2"></i>
@@ -366,13 +411,14 @@
                 <i class="far fa-star" data-rating="4"></i>
                 <i class="far fa-star" data-rating="5"></i>
             </div>
-            <textarea id="reviewText" class="rating-review" rows="3" placeholder="Tulis review (opsional)..."></textarea>
-            <button class="btn btn-primary" onclick="submitRating()">Kirim Rating</button>
-            <button class="btn btn-secondary" onclick="closeRatingModal()">Tutup</button>
+            <textarea id="reviewText" class="rating-review" rows="2" placeholder="Tulis review (opsional)..."></textarea>
+            <button class="btn btn-primary btn-sm" onclick="submitRating()" style="margin-bottom:5px;">Kirim Rating</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeRatingModal()">Tutup</button>
         </div>
     </div>
 
     <script>
+        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBzE1Fu7NV6vwR2kTRgOm_yrw1mH0B9w00",
             authDomain: "anjas-app-9b5a4.firebaseapp.com",
@@ -385,33 +431,13 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // Variabel Global
-        let role = null;
-        let menu = 'home';
-        let uid = null;
-        let userEmail = '';
-        let userData = null;
-        let allDrivers = [];
-        let selectedDriverKhusus = null;
-        
-        let khususOffers = [];
-        let umumOffers = [];
-        let sortType = 'rating';
-        let sortOrder = 'desc';
-        let activeTab = 'umum';
-        let statistikTahun = new Date().getFullYear();
-        let driverStatistikTahun = new Date().getFullYear();
-        
-        let offerListener = null;
-        let currentRatingDriverId = null;
-        let currentRatingCustomerId = null;
-        let currentRatingOrderId = null;
-        let selectedRating = 0;
-        let ratingType = 'driver';
-        let statChart = null;
-        let driverStatChart = null;
-        
-        // ============ SESSION MANAGEMENT ============
+        // GLOBAL VARIABLES
+        let role = null, menu = 'home', uid = null, userEmail = '', userData = null, allDrivers = [], selectedDriverKhusus = null;
+        let khususOffers = [], umumOffers = [], sortType = 'rating', sortOrder = 'desc', activeTab = 'umum';
+        let statistikTahun = new Date().getFullYear(), driverStatistikTahun = new Date().getFullYear();
+        let offerListener = null, currentRatingTargetId = null, currentRatingOrderId = null, selectedRating = 0, ratingType = 'driver', isEditRating = false;
+        let statChart = null, driverStatChart = null;
+
         function saveSession(roleVal, uidVal, emailVal, userDataVal) {
             if (roleVal && uidVal) {
                 localStorage.setItem('anjas_role', roleVal);
@@ -420,44 +446,28 @@
                 if (userDataVal) localStorage.setItem('anjas_userData', JSON.stringify(userDataVal));
             }
         }
-        
         function clearSession() {
             localStorage.removeItem('anjas_role');
             localStorage.removeItem('anjas_uid');
             localStorage.removeItem('anjas_email');
             localStorage.removeItem('anjas_userData');
         }
-        
         function showToast(msg, isErr = false) {
             let t = document.createElement('div');
             t.textContent = msg;
-            t.style.cssText = `position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:${isErr ? '#f44336' : '#4CAF50'}; color:white; padding:10px 20px; border-radius:50px; font-size:14px; z-index:1000; white-space:nowrap;`;
+            t.style.cssText = `position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:${isErr ? '#f44336' : '#4CAF50'}; color:white; padding:8px 16px; border-radius:40px; font-size:13px; z-index:1000; white-space:nowrap;`;
             document.body.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
+            setTimeout(() => t.remove(), 2500);
         }
-        
-        function closeInfoModal() {
-            document.getElementById('infoModal').style.display = 'none';
+        function closeInfoModal() { document.getElementById('infoModal').style.display = 'none'; }
+        function closeRatingModal() { 
+            document.getElementById('ratingModal').style.display = 'none'; 
+            currentRatingTargetId = currentRatingOrderId = null; 
+            selectedRating = 0; 
+            isEditRating = false;
         }
-        
-        function closeRatingModal() {
-            document.getElementById('ratingModal').style.display = 'none';
-            currentRatingDriverId = null;
-            currentRatingCustomerId = null;
-            currentRatingOrderId = null;
-            selectedRating = 0;
-        }
-        
-        function stopListeners() {
-            if (offerListener) db.ref('tawaran').off('value', offerListener);
-            offerListener = null;
-        }
-        
-        function goTo(page) {
-            stopListeners();
-            menu = page;
-            renderPage();
-        }
+        function stopListeners() { if (offerListener) db.ref('tawaran').off('value', offerListener); offerListener = null; }
+        function goTo(page) { stopListeners(); menu = page; renderPage(); }
         
         function bottomNav() {
             if (!role) return '';
@@ -467,12 +477,40 @@
             let active = menu.split('-')[1] || menu;
             return `<div class="bottom-nav">${items.map(i => `<div class="nav-item ${active === i[0] ? 'active' : ''}" onclick="goTo('${role}-${i[0]}')"><i class="fas ${i[1]} nav-icon"></i><div class="nav-label">${i[2]}</div></div>`).join('')}<div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt nav-icon"></i><div class="nav-label">Keluar</div></div></div>`;
         }
+
+        function renderPage() {
+            let app = document.getElementById('app');
+            if (!app) return;
+            if (menu === 'home') {
+                renderLogin(app);
+                return;
+            }
+            if (!role && !uid) {
+                let savedRole = localStorage.getItem('anjas_role');
+                let savedUid = localStorage.getItem('anjas_uid');
+                let savedEmail = localStorage.getItem('anjas_email');
+                let savedUserData = localStorage.getItem('anjas_userData');
+                if (savedRole && savedUid) {
+                    auth.onAuthStateChanged(async (user) => {
+                        if (user && user.uid === savedUid) {
+                            role = savedRole; uid = savedUid; userEmail = savedEmail || '';
+                            if (savedUserData) userData = JSON.parse(savedUserData);
+                            let snap = await db.ref(`${role}s/${uid}`).once('value');
+                            if (snap.exists()) { userData = snap.val(); menu = role === 'customer' ? 'customer-cari' : 'driver-order'; renderHomePage(); return; }
+                        }
+                        clearSession(); role = null; menu = 'home'; renderLogin(app);
+                    });
+                    return;
+                }
+                renderLogin(app);
+                return;
+            }
+            renderHomePage();
+        }
         
         function renderHomePage() {
             let app = document.getElementById('app');
-            if (menu === 'home') renderHome(app);
-            else if (menu === 'login') renderLogin(app);
-            else if (role === 'customer') {
+            if (role === 'customer') {
                 if (menu === 'customer-cari') renderCustomerCari(app);
                 else if (menu === 'customer-order') renderCustomerOrder(app);
                 else if (menu === 'customer-tawaran') renderCustomerTawaran(app);
@@ -487,176 +525,77 @@
                 else if (menu === 'driver-akun') renderDriverAkun(app);
             }
         }
-        
-        function renderPage() {
-            let app = document.getElementById('app');
-            if (!app) return;
-            
-            // Cek session
-            if (!role && !uid) {
-                let savedRole = localStorage.getItem('anjas_role');
-                let savedUid = localStorage.getItem('anjas_uid');
-                let savedEmail = localStorage.getItem('anjas_email');
-                let savedUserData = localStorage.getItem('anjas_userData');
-                
-                if (savedRole && savedUid) {
-                    auth.onAuthStateChanged(async (user) => {
-                        if (user && user.uid === savedUid) {
-                            role = savedRole;
-                            uid = savedUid;
-                            userEmail = savedEmail || '';
-                            if (savedUserData) userData = JSON.parse(savedUserData);
-                            
-                            let snap = await db.ref(`${role}s/${uid}`).once('value');
-                            if (snap.exists()) {
-                                userData = snap.val();
-                                menu = role === 'customer' ? 'customer-cari' : 'driver-order';
-                                renderHomePage();
-                                return;
-                            }
-                        }
-                        clearSession();
-                        menu = 'home';
-                        renderHome(app);
-                    });
-                    return;
-                }
-            }
-            renderHomePage();
-        }
-        
-        function renderHome(container) {
-            container.innerHTML = `
-                <div class="card" style="text-align:center">
-                    <div class="title">🚗 ANJAS</div>
-                    <p class="subtitle">Antar Jemput Anak Unnes</p>
-                    <button class="btn btn-primary" onclick="pilihRole('customer')" style="margin-bottom:10px">CUSTOMER</button>
-                    <button class="btn btn-primary" onclick="pilihRole('driver')">DRIVER</button>
-                </div>
-            `;
-        }
-        
-        function pilihRole(r) {
-            role = r;
-            menu = 'login';
-            renderPage();
-        }
-        
+
         function renderLogin(container) {
             container.innerHTML = `
-                <div class="card">
-                    <h2><i class="fas ${role === 'customer' ? 'fa-user-circle' : 'fa-motorcycle'}"></i> ${role === 'customer' ? 'Customer' : 'Driver'}</h2>
+                <div class="login-card">
+                    <div class="title" style="font-size: 36px;">🚗 ANJAS</div>
+                    <p class="subtitle">Antar Jemput Anak Unnes</p>
+                    <div class="role-selector">
+                        <button class="role-btn ${role === 'customer' ? 'active' : ''}" onclick="pilihRole('customer')">CUSTOMER</button>
+                        <button class="role-btn ${role === 'driver' ? 'active' : ''}" onclick="pilihRole('driver')">DRIVER</button>
+                    </div>
                     <input type="email" id="loginEmail" placeholder="Email" class="input">
                     <input type="password" id="loginPassword" placeholder="Password" class="input">
                     <button class="btn btn-primary" onclick="doLogin()">LOGIN</button>
                     <button class="btn btn-secondary" onclick="doRegister()">REGISTER</button>
-                    <button class="btn btn-back" onclick="goTo('home')">KEMBALI</button>
                     <div id="loginMsg" class="error hidden"></div>
                 </div>
             `;
         }
         
+        function pilihRole(r) { 
+            role = r; 
+            renderLogin(document.getElementById('app'));
+        }
+        
         async function doLogin() {
-            let email = document.getElementById('loginEmail').value.trim();
-            let pass = document.getElementById('loginPassword').value;
-            let msg = document.getElementById('loginMsg');
+            let email = document.getElementById('loginEmail').value.trim(), pass = document.getElementById('loginPassword').value, msg = document.getElementById('loginMsg');
             if (!email || !pass) { msg.innerText = 'Isi email dan password!'; msg.classList.remove('hidden'); return; }
             msg.classList.add('hidden');
             try {
                 let res = await auth.signInWithEmailAndPassword(email, pass);
-                uid = res.user.uid;
-                userEmail = email;
+                uid = res.user.uid; userEmail = email;
                 let snap = await db.ref(`${role}s/${uid}`).once('value');
-                if (!snap.exists()) {
-                    await db.ref(`${role}s/${uid}`).set({ email, nama: '', foto: '', createdAt: Date.now(), totalRides: 0 });
-                }
+                if (!snap.exists()) await db.ref(`${role}s/${uid}`).set({ email, nama: '', foto: '', createdAt: Date.now(), totalRides: 0 });
                 userData = (await db.ref(`${role}s/${uid}`).once('value')).val() || {};
-                
                 saveSession(role, uid, userEmail, userData);
-                
                 menu = role === 'customer' ? 'customer-cari' : 'driver-order';
                 renderPage();
             } catch(err) { msg.innerText = err.message; msg.classList.remove('hidden'); }
         }
         
         async function doRegister() {
-            let email = document.getElementById('loginEmail').value.trim();
-            let pass = document.getElementById('loginPassword').value;
-            let msg = document.getElementById('loginMsg');
+            let email = document.getElementById('loginEmail').value.trim(), pass = document.getElementById('loginPassword').value, msg = document.getElementById('loginMsg');
             if (!email || !pass || pass.length < 6) { msg.innerText = 'Password minimal 6 karakter!'; msg.classList.remove('hidden'); return; }
             msg.classList.add('hidden');
             try {
                 let res = await auth.createUserWithEmailAndPassword(email, pass);
                 uid = res.user.uid;
                 await db.ref(`${role}s/${uid}`).set({ email, nama: '', foto: '', createdAt: Date.now(), totalRides: 0 });
-                msg.classList.add('success');
-                msg.innerText = '✅ Register berhasil! Silakan login.';
-                msg.classList.remove('error', 'hidden');
+                msg.classList.add('success'); msg.innerText = '✅ Register berhasil! Silakan login.'; msg.classList.remove('error', 'hidden');
+                setTimeout(() => msg.classList.add('hidden'), 3000);
             } catch(err) { msg.innerText = err.message; msg.classList.remove('hidden'); }
         }
         
-        async function logout() {
-            await auth.signOut();
-            clearSession();
-            role = null;
-            menu = 'home';
-            renderPage();
+        async function logout() { 
+            await auth.signOut(); 
+            clearSession(); 
+            role = null; 
+            menu = 'home'; 
+            renderPage(); 
         }
-        
+
+        // CUSTOMER - CARI KHUSUS
         async function renderCustomerCari(container) {
             let snap = await db.ref('drivers').once('value');
             allDrivers = [];
             snap.forEach(child => { let d = child.val(); if (d) allDrivers.push({ id: child.key, ...d }); });
-            
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card customer-card">
-                    <h2><i class="fas fa-search"></i> Cari Driver (Khusus)</h2>
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchDriver" placeholder="Cari driver..." class="input">
-                    </div>
-                    <div id="driverList">
-                        ${allDrivers.map(d => `
-                            <div class="driver-item" onclick="pilihDriverKhusus('${d.id}')">
-                                <div class="avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div>
-                                <div class="info-text">
-                                    <div class="name-text">${d.nama || 'Driver'}</div>
-                                    <div class="detail-text">🏍️ ${d.jenisMotor || '-'} | 🔢 ${d.plat || '-'}</div>
-                                    <div class="detail-text">⭐ ${d.rating || 0} | 🏆 ${d.totalTrip || 0} trip</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="card customer-card">
-                    <h2><i class="fas fa-calendar"></i> Booking Khusus</h2>
-                    <input type="text" id="namaKhusus" placeholder="Nama lengkap" class="input" value="${userData?.nama || ''}">
-                    <input type="text" id="jemputKhusus" placeholder="Lokasi jemput" class="input">
-                    <input type="text" id="tujuanKhusus" placeholder="Lokasi tujuan" class="input">
-                    <input type="datetime-local" id="waktuKhusus" class="input">
-                    <button class="btn btn-primary" onclick="buatOrderKhusus()">CARI DRIVER KHUSUS</button>
-                    <div id="orderKhususMsg" class="error hidden"></div>
-                </div>
-                <div id="selectedDriverPanel" class="card customer-card hidden">
-                    <h3>Driver Dipilih</h3>
-                    <div id="selectedDriverDetail"></div>
-                </div>
-            `;
-            
+            container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-search"></i> Cari Driver (Khusus)</h2><div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchDriver" placeholder="Cari driver..." class="input"></div><div id="driverList">${allDrivers.map(d => `<div class="driver-item" onclick="pilihDriverKhusus('${d.id}')"><div class="avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div><div class="info-text"><div class="name-text">${d.nama || 'Driver'}</div><div class="detail-text">🏍️ ${d.jenisMotor || '-'} | 🔢 ${d.plat || '-'}</div><div class="detail-text">⭐ ${d.rating || 0} | 🏆 ${d.totalTrip || 0} trip</div></div></div>`).join('')}</div></div><div class="card customer-card"><h2><i class="fas fa-calendar"></i> Booking Khusus</h2><input type="text" id="namaKhusus" placeholder="Nama lengkap" class="input" value="${userData?.nama || ''}"><input type="text" id="jemputKhusus" placeholder="Lokasi jemput" class="input"><input type="text" id="tujuanKhusus" placeholder="Lokasi tujuan" class="input"><input type="datetime-local" id="waktuKhusus" class="input"><button class="btn btn-primary" onclick="buatOrderKhusus()">CARI DRIVER KHUSUS</button><div id="orderKhususMsg" class="error hidden"></div></div><div id="selectedDriverPanel" class="card customer-card hidden"><h3>Driver Dipilih</h3><div id="selectedDriverDetail"></div></div>`;
             document.getElementById('searchDriver')?.addEventListener('input', (e) => {
                 let q = e.target.value.toLowerCase();
                 let filtered = allDrivers.filter(d => (d.nama || '').toLowerCase().includes(q));
-                document.getElementById('driverList').innerHTML = filtered.map(d => `
-                    <div class="driver-item" onclick="pilihDriverKhusus('${d.id}')">
-                        <div class="avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div>
-                        <div class="info-text">
-                            <div class="name-text">${d.nama || 'Driver'}</div>
-                            <div class="detail-text">🏍️ ${d.jenisMotor || '-'} | 🔢 ${d.plat || '-'}</div>
-                            <div class="detail-text">⭐ ${d.rating || 0} | 🏆 ${d.totalTrip || 0} trip</div>
-                        </div>
-                    </div>
-                `).join('');
+                document.getElementById('driverList').innerHTML = filtered.map(d => `<div class="driver-item" onclick="pilihDriverKhusus('${d.id}')"><div class="avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div><div class="info-text"><div class="name-text">${d.nama || 'Driver'}</div><div class="detail-text">🏍️ ${d.jenisMotor || '-'} | 🔢 ${d.plat || '-'}</div><div class="detail-text">⭐ ${d.rating || 0} | 🏆 ${d.totalTrip || 0} trip</div></div></div>`).join('');
             });
         }
         
@@ -665,135 +604,97 @@
             if (!d) return;
             selectedDriverKhusus = id;
             document.getElementById('selectedDriverPanel').classList.remove('hidden');
-            document.getElementById('selectedDriverDetail').innerHTML = `
-                <div class="driver-item" style="background:#FFF8E1; cursor:default;">
-                    <div class="avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div>
-                    <div class="info-text">
-                        <div class="name-text">${d.nama}</div>
-                        <div class="detail-text">⭐ ${d.rating || 0}</div>
-                    </div>
-                </div>
-            `;
+            document.getElementById('selectedDriverDetail').innerHTML = `<div class="driver-item" style="background:#FFF8E1; cursor:default;"><div class="avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div><div class="info-text"><div class="name-text">${d.nama}</div><div class="detail-text">⭐ ${d.rating || 0}</div></div></div>`;
             showToast(`Driver ${d.nama} dipilih`);
         }
         
         async function buatOrderKhusus() {
-            let nama = document.getElementById('namaKhusus').value.trim();
-            let jemput = document.getElementById('jemputKhusus').value.trim();
-            let tujuan = document.getElementById('tujuanKhusus').value.trim();
-            let waktu = document.getElementById('waktuKhusus').value;
-            let msg = document.getElementById('orderKhususMsg');
+            let nama = document.getElementById('namaKhusus').value.trim(), jemput = document.getElementById('jemputKhusus').value.trim(), tujuan = document.getElementById('tujuanKhusus').value.trim(), waktu = document.getElementById('waktuKhusus').value, msg = document.getElementById('orderKhususMsg');
             if (!selectedDriverKhusus) { msg.innerText = 'Pilih driver dulu!'; msg.classList.remove('hidden'); return; }
-            if (!nama) { msg.innerText = 'Isi nama!'; msg.classList.remove('hidden'); return; }
-            if (!jemput) { msg.innerText = 'Isi lokasi jemput!'; msg.classList.remove('hidden'); return; }
-            if (!tujuan) { msg.innerText = 'Isi lokasi tujuan!'; msg.classList.remove('hidden'); return; }
-            if (!waktu) { msg.innerText = 'Pilih waktu!'; msg.classList.remove('hidden'); return; }
+            if (!nama || !jemput || !tujuan || !waktu) { msg.innerText = 'Isi semua field!'; msg.classList.remove('hidden'); return; }
             msg.classList.add('hidden');
             await db.ref(`customers/${uid}`).update({ nama });
             let orderId = db.ref('orders').push().key;
-            await db.ref(`orders/${orderId}`).set({
-                orderId, customerId: uid, customerEmail: userEmail, customerNama: nama,
-                pickup: jemput, dropoff: tujuan, waktu, targetDriver: selectedDriverKhusus,
-                status: 'menunggu', jenis: 'khusus', harga: 0, createdAt: Date.now()
-            });
-            document.getElementById('jemputKhusus').value = '';
-            document.getElementById('tujuanKhusus').value = '';
-            document.getElementById('waktuKhusus').value = '';
-            showToast('✅ Order khusus terkirim!');
-            goTo('customer-tawaran');
+            await db.ref(`orders/${orderId}`).set({ orderId, customerId: uid, customerEmail: userEmail, customerNama: nama, pickup: jemput, dropoff: tujuan, waktu, targetDriver: selectedDriverKhusus, status: 'menunggu', jenis: 'khusus', harga: 0, createdAt: Date.now() });
+            document.getElementById('jemputKhusus').value = ''; document.getElementById('tujuanKhusus').value = ''; document.getElementById('waktuKhusus').value = '';
+            showToast('✅ Order khusus terkirim!'); goTo('customer-tawaran');
         }
-        
-        function renderCustomerOrder(container) {
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card customer-card">
-                    <h2><i class="fas fa-shopping-cart"></i> Order Umum</h2>
-                    <p class="detail-text" style="margin-bottom:15px;">Pesanan akan dilihat oleh SEMUA driver.</p>
-                    <input type="text" id="namaUmum" placeholder="Nama lengkap" class="input" value="${userData?.nama || ''}">
-                    <input type="text" id="jemputUmum" placeholder="Lokasi jemput" class="input">
-                    <input type="text" id="tujuanUmum" placeholder="Lokasi tujuan" class="input">
-                    <input type="datetime-local" id="waktuUmum" class="input">
-                    <button class="btn btn-primary" onclick="buatOrderUmum()">BUAT ORDER UMUM</button>
-                    <div id="orderUmumMsg" class="error hidden"></div>
-                </div>
-            `;
-        }
+
+        // CUSTOMER - ORDER UMUM
+        function renderCustomerOrder(container) { container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-shopping-cart"></i> Order Umum</h2><p class="detail-text" style="margin-bottom:15px;">Pesanan akan dilihat oleh SEMUA driver.</p><input type="text" id="namaUmum" placeholder="Nama lengkap" class="input" value="${userData?.nama || ''}"><input type="text" id="jemputUmum" placeholder="Lokasi jemput" class="input"><input type="text" id="tujuanUmum" placeholder="Lokasi tujuan" class="input"><input type="datetime-local" id="waktuUmum" class="input"><button class="btn btn-primary" onclick="buatOrderUmum()">BUAT ORDER UMUM</button><div id="orderUmumMsg" class="error hidden"></div></div>`; }
         
         async function buatOrderUmum() {
-            let nama = document.getElementById('namaUmum').value.trim();
-            let jemput = document.getElementById('jemputUmum').value.trim();
-            let tujuan = document.getElementById('tujuanUmum').value.trim();
-            let waktu = document.getElementById('waktuUmum').value;
-            let msg = document.getElementById('orderUmumMsg');
-            if (!nama) { msg.innerText = 'Isi nama!'; msg.classList.remove('hidden'); return; }
-            if (!jemput) { msg.innerText = 'Isi lokasi jemput!'; msg.classList.remove('hidden'); return; }
-            if (!tujuan) { msg.innerText = 'Isi lokasi tujuan!'; msg.classList.remove('hidden'); return; }
-            if (!waktu) { msg.innerText = 'Pilih waktu!'; msg.classList.remove('hidden'); return; }
+            let nama = document.getElementById('namaUmum').value.trim(), jemput = document.getElementById('jemputUmum').value.trim(), tujuan = document.getElementById('tujuanUmum').value.trim(), waktu = document.getElementById('waktuUmum').value, msg = document.getElementById('orderUmumMsg');
+            if (!nama || !jemput || !tujuan || !waktu) { msg.innerText = 'Isi semua field!'; msg.classList.remove('hidden'); return; }
             msg.classList.add('hidden');
             await db.ref(`customers/${uid}`).update({ nama });
             let orderId = db.ref('orders').push().key;
-            await db.ref(`orders/${orderId}`).set({
-                orderId, customerId: uid, customerEmail: userEmail, customerNama: nama,
-                pickup: jemput, dropoff: tujuan, waktu,
-                status: 'menunggu', jenis: 'umum', harga: 0, createdAt: Date.now()
-            });
-            document.getElementById('jemputUmum').value = '';
-            document.getElementById('tujuanUmum').value = '';
-            document.getElementById('waktuUmum').value = '';
-            showToast('✅ Order umum terkirim!');
-            goTo('customer-tawaran');
+            await db.ref(`orders/${orderId}`).set({ orderId, customerId: uid, customerEmail: userEmail, customerNama: nama, pickup: jemput, dropoff: tujuan, waktu, status: 'menunggu', jenis: 'umum', harga: 0, createdAt: Date.now() });
+            document.getElementById('jemputUmum').value = ''; document.getElementById('tujuanUmum').value = ''; document.getElementById('waktuUmum').value = '';
+            showToast('✅ Order umum terkirim!'); goTo('customer-tawaran');
         }
-        
+
+        // TAWARAN - DIPERBAIKI UNTUK ORDER KHUSUS
         async function loadOffers() {
-            khususOffers = [];
+            khususOffers = []; 
             umumOffers = [];
             
             let tawaranSnap = await db.ref('tawaran').once('value');
             let semuaTawaran = tawaranSnap.val() || {};
-            
             let ordersSnap = await db.ref('orders').once('value');
             let semuaOrders = ordersSnap.val() || {};
             
             for (let [orderId, daftarTawaran] of Object.entries(semuaTawaran)) {
                 let order = semuaOrders[orderId];
-                if (!order) continue;
-                if (order.customerId !== uid) continue;
-                if (order.status !== 'menunggu_konfirmasi') continue;
+                
+                // Perbaikan: Cek order milik customer ini
+                if (!order || order.customerId !== uid) continue;
+                
+                // Hanya tampilkan order yang belum diambil/dalam perjalanan
+                if (order.status !== 'menunggu' && order.status !== 'menunggu_konfirmasi') continue;
+                
+                let uniqueDrivers = new Map();
                 
                 for (let [tawaranId, tawaran] of Object.entries(daftarTawaran)) {
-                    let driverSnap = await db.ref(`drivers/${tawaran.driverId}`).once('value');
-                    let driver = driverSnap.val();
+                    // Untuk order khusus, hanya driver yang dipilih yang bisa
+                    if (order.jenis === 'khusus') {
+                        if (order.targetDriver !== tawaran.driverId) continue;
+                    }
                     
-                    if (driver && tawaran.harga) {
-                        let offerData = {
-                            id: orderId,
-                            tawaranId: tawaranId,
-                            driverId: tawaran.driverId,
-                            nama: driver.nama || 'Driver',
-                            foto: driver.foto || '',
-                            motor: driver.jenisMotor || '-',
-                            plat: driver.plat || '-',
-                            rating: driver.rating || 0,
-                            harga: tawaran.harga,
-                            waktu: order.waktu,
-                            pickup: order.pickup,
-                            dropoff: order.dropoff
-                        };
-                        if (order.jenis === 'khusus') khususOffers.push(offerData);
-                        else umumOffers.push(offerData);
+                    if (!uniqueDrivers.has(tawaran.driverId) || uniqueDrivers.get(tawaran.driverId).harga > tawaran.harga) {
+                        let driver = await db.ref(`drivers/${tawaran.driverId}`).once('value');
+                        let driverData = driver.val();
+                        if (driverData && tawaran.harga) {
+                            uniqueDrivers.set(tawaran.driverId, {
+                                orderId: orderId,
+                                tawaranId: tawaranId,
+                                driverId: tawaran.driverId,
+                                nama: driverData.nama || 'Driver',
+                                foto: driverData.foto || '',
+                                motor: driverData.jenisMotor || '-',
+                                plat: driverData.plat || '-',
+                                rating: driverData.rating || 0,
+                                harga: tawaran.harga,
+                                waktu: order.waktu,
+                                pickup: order.pickup,
+                                dropoff: order.dropoff,
+                                jenis: order.jenis
+                            });
+                        }
+                    }
+                }
+                
+                let offersArray = Array.from(uniqueDrivers.values());
+                
+                for (let offer of offersArray) {
+                    if (offer.jenis === 'khusus') {
+                        khususOffers.push(offer);
+                    } else {
+                        umumOffers.push(offer);
                     }
                 }
             }
             
-            const uniqueUmum = [];
-            const seenDriver = new Set();
-            for (let offer of umumOffers) {
-                if (!seenDriver.has(offer.driverId)) {
-                    seenDriver.add(offer.driverId);
-                    uniqueUmum.push(offer);
-                }
-            }
-            umumOffers = uniqueUmum;
             renderTawaranContent();
         }
         
@@ -801,25 +702,12 @@
             let sorted = [...offers];
             if (sortType === 'rating') sorted.sort((a,b) => sortOrder === 'desc' ? b.rating - a.rating : a.rating - b.rating);
             else if (sortType === 'price') sorted.sort((a,b) => sortOrder === 'desc' ? b.harga - a.harga : a.harga - b.harga);
-            else if (sortType === 'combination') sorted.sort((a,b) => {
-                let scoreA = (a.rating * 1000) - a.harga;
-                let scoreB = (b.rating * 1000) - b.harga;
-                return sortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB;
+            else if (sortType === 'combination') sorted.sort((a,b) => { 
+                let scoreA = (a.rating * 1000) - a.harga; 
+                let scoreB = (b.rating * 1000) - b.harga; 
+                return sortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB; 
             });
             return sorted;
-        }
-        
-        async function hapusTawaranLain(orderIdPilih) {
-            let snap = await db.ref('orders').once('value');
-            let orders = snap.val();
-            if (orders) {
-                for (let id in orders) {
-                    let o = orders[id];
-                    if (o.customerId === uid && o.status === 'menunggu_konfirmasi' && id !== orderIdPilih) {
-                        await db.ref(`orders/${id}`).remove();
-                    }
-                }
-            }
         }
         
         function renderTawaranContent() {
@@ -828,22 +716,40 @@
             let sorted = sortOffers(currentOffers);
             let title = activeTab === 'khusus' ? 'Penawaran Khusus' : 'Penawaran Order Umum';
             
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card customer-card">
-                    <h2><i class="fas fa-tag"></i> ${title}</h2>
-                    <div class="tab-buttons">
-                        <button class="tab-btn ${activeTab === 'khusus' ? 'active' : ''}" onclick="setTab('khusus')">Khusus</button>
-                        <button class="tab-btn ${activeTab === 'umum' ? 'active' : ''}" onclick="setTab('umum')">Order Umum</button>
-                    </div>
-                    <div class="sort-buttons">
-                        <button class="sort-btn ${sortType === 'rating' ? 'active' : ''}" onclick="setSort('rating')">⭐ Rating ${sortOrder === 'desc' ? '▼' : '▲'}</button>
-                        <button class="sort-btn ${sortType === 'price' ? 'active' : ''}" onclick="setSort('price')">💰 Harga ${sortOrder === 'desc' ? '▼' : '▲'}</button>
-                        <button class="sort-btn ${sortType === 'combination' ? 'active' : ''}" onclick="setSort('combination')">🏆 Kombinasi</button>
-                    </div>
-                    ${sorted.length === 0 ? '<p style="padding:40px;text-align:center; color:#999;">Belum ada penawaran</p>' : 
-                        sorted.map(o => `
-                            <div class="offer-card">
+            let groupedByOrder = {};
+            for (let offer of sorted) {
+                if (!groupedByOrder[offer.orderId]) {
+                    groupedByOrder[offer.orderId] = {
+                        orderInfo: offer,
+                        allOffers: []
+                    };
+                }
+                let existingDriver = groupedByOrder[offer.orderId].allOffers.find(o => o.driverId === offer.driverId);
+                if (!existingDriver) {
+                    groupedByOrder[offer.orderId].allOffers.push(offer);
+                }
+            }
+            
+            container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-tag"></i> ${title}</h2>
+            <div class="tab-buttons">
+                <button class="tab-btn ${activeTab === 'khusus' ? 'active' : ''}" onclick="setTab('khusus')">Khusus</button>
+                <button class="tab-btn ${activeTab === 'umum' ? 'active' : ''}" onclick="setTab('umum')">Order Umum</button>
+            </div>
+            <div class="sort-buttons">
+                <button class="sort-btn ${sortType === 'rating' ? 'active' : ''}" onclick="setSort('rating')">⭐ Rating ${sortOrder === 'desc' ? '▼' : '▲'}</button>
+                <button class="sort-btn ${sortType === 'price' ? 'active' : ''}" onclick="setSort('price')">💰 Harga ${sortOrder === 'desc' ? '▼' : '▲'}</button>
+                <button class="sort-btn ${sortType === 'combination' ? 'active' : ''}" onclick="setSort('combination')">🏆 Kombinasi</button>
+            </div>
+            ${Object.keys(groupedByOrder).length === 0 ? 
+                '<p style="padding:40px;text-align:center; color:#999;">Belum ada penawaran</p>' : 
+                Object.values(groupedByOrder).map(group => `
+                    <div class="card" style="margin-bottom:16px; background:#FFFAF0; padding:16px;">
+                        <div class="detail-text" style="margin-bottom:10px;">
+                            <strong>📍 ${group.orderInfo.pickup} → ${group.orderInfo.dropoff}</strong><br>
+                            ⏰ ${group.orderInfo.waktu}
+                        </div>
+                        ${group.allOffers.map(o => `
+                            <div class="offer-card" style="margin-bottom:10px;">
                                 <div style="display:flex; gap:12px; flex-wrap:wrap;">
                                     <div class="avatar" style="width:45px; height:45px; cursor:pointer;" onclick="showInfoDriver('${o.driverId}')">
                                         ${o.foto ? `<img src="${o.foto}">` : '🏍️'}
@@ -852,120 +758,280 @@
                                         <strong>${o.nama}</strong>
                                         <div class="detail-text">⭐ ${o.rating || 0}</div>
                                         <div class="detail-text">🏍️ ${o.motor} | 🔢 ${o.plat}</div>
-                                        <div class="detail-text">📍 ${o.pickup} → ${o.dropoff}</div>
-                                        <div class="detail-text">⏰ ${o.waktu}</div>
-                                        <div style="font-size:18px; color:#FF8F00; margin-top:6px;">Rp ${o.harga.toLocaleString()}</div>
+                                        <div style="font-size:18px; color:#FF8F00; margin-top:6px;">
+                                            Rp ${o.harga.toLocaleString()}
+                                        </div>
                                     </div>
                                     <div class="offer-actions">
-                                        <button class="btn btn-success btn-sm" onclick="terimaTawaran('${o.id}','${o.driverId}','${o.nama}','${o.waktu}','${o.pickup}','${o.dropoff}','${o.motor}','${o.plat}',${o.harga})">Setuju</button>
-                                        <button class="btn btn-danger btn-sm" onclick="hapusTawaran('${o.id}')">Hapus</button>
+                                        <button class="btn btn-success btn-sm" onclick="terimaTawaran('${o.orderId}','${o.driverId}','${o.nama}','${o.waktu}','${o.pickup}','${o.dropoff}','${o.motor}','${o.plat}',${o.harga})">
+                                            Setuju
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="tolakTawaranDriver('${o.orderId}','${o.driverId}','${o.tawaranId}')">
+                                            Tolak
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        `).join('')
-                    }
-                </div>
-            `;
+                        `).join('')}
+                    </div>
+                `).join('')}
+            </div>`;
         }
         
-        function renderCustomerTawaran(container) {
-            if (offerListener) db.ref('tawaran').off('value', offerListener);
-            offerListener = db.ref('tawaran').on('value', () => loadOffers());
-            loadOffers();
-        }
-        
-        function setTab(tab) {
-            activeTab = tab;
-            renderTawaranContent();
-        }
-        
-        function setSort(type) {
-            if (sortType === type) sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
-            else { sortType = type; sortOrder = 'desc'; }
-            renderTawaranContent();
-        }
-        
-        async function hapusTawaran(id) {
-            if (confirm('Hapus penawaran ini?')) {
-                await db.ref(`orders/${id}`).remove();
-                showToast('Penawaran dihapus');
+        async function tolakTawaranDriver(orderId, driverId, tawaranId) {
+            if (confirm('Tolak tawaran dari driver ini?')) {
+                await db.ref(`tawaran/${orderId}/${tawaranId}`).remove();
+                showToast('Tawaran ditolak');
                 loadOffers();
             }
         }
         
-        async function terimaTawaran(id, driverId, driverName, waktu, pickup, dropoff, motor, plat, harga) {
+        function renderCustomerTawaran(container) { 
+            if (offerListener) {
+                db.ref('tawaran').off('value', offerListener);
+            }
+            offerListener = db.ref('tawaran').on('value', () => loadOffers()); 
+            loadOffers(); 
+        }
+        
+        function setTab(tab) { activeTab = tab; renderTawaranContent(); }
+        function setSort(type) { if (sortType === type) sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'; else { sortType = type; sortOrder = 'desc'; } renderTawaranContent(); }
+        
+        async function terimaTawaran(orderId, driverId, driverName, waktu, pickup, dropoff, motor, plat, harga) {
             if (confirm(`Setuju dengan tawaran dari ${driverName} seharga Rp ${harga.toLocaleString()}?`)) {
-                await db.ref(`orders/${id}`).update({ status: 'perjalanan_dimulai', driverId, driverName, startTime: Date.now() });
+                await db.ref(`orders/${orderId}`).update({ 
+                    status: 'perjalanan_dimulai', 
+                    driverId, 
+                    driverName, 
+                    startTime: Date.now(),
+                    harga: harga,
+                    customerSelesai: false,
+                    driverSelesai: false,
+                    customerRated: false,
+                    driverRated: false
+                });
+                
+                await db.ref(`tawaran/${orderId}`).remove();
                 
                 let snap = await db.ref('orders').once('value');
                 let orders = snap.val();
-                if (orders) {
-                    for (let orderId in orders) {
-                        let o = orders[orderId];
-                        if (o.customerId === uid && o.status === 'menunggu_konfirmasi' && orderId !== id) {
-                            await db.ref(`orders/${orderId}`).remove();
+                if (orders) { 
+                    for (let id in orders) { 
+                        let o = orders[id]; 
+                        if (o.customerId === uid && o.status === 'menunggu_konfirmasi' && id !== orderId) {
+                            await db.ref(`orders/${id}`).remove();
+                            await db.ref(`tawaran/${id}`).remove();
                         }
-                    }
+                    } 
                 }
                 
-                await db.ref(`active_rides/${uid}`).set({
-                    orderId: id, driverId, driverName, motor, plat, pickup, dropoff, harga, waktu, startTime: Date.now(),
-                    customerId: uid, customerName: userData?.nama || 'Customer'
+                await db.ref(`active_rides/${uid}`).set({ 
+                    orderId: orderId, 
+                    driverId, 
+                    driverName, 
+                    motor, 
+                    plat, 
+                    pickup, 
+                    dropoff, 
+                    harga, 
+                    waktu, 
+                    startTime: Date.now(), 
+                    customerId: uid, 
+                    customerName: userData?.nama || 'Customer' 
                 });
                 
-                await db.ref(`driver_active_rides/${driverId}`).set({
-                    orderId: id, customerId: uid, customerName: userData?.nama || 'Customer',
-                    pickup, dropoff, harga, startTime: Date.now()
+                await db.ref(`driver_active_rides/${driverId}`).set({ 
+                    orderId: orderId, 
+                    customerId: uid, 
+                    customerName: userData?.nama || 'Customer', 
+                    pickup, 
+                    dropoff, 
+                    harga, 
+                    startTime: Date.now() 
                 });
                 
-                showToast(`✅ Setuju! ${driverName} akan menjemput di ${waktu}`);
-                loadOffers();
+                showToast(`✅ Setuju! ${driverName} akan menjemput`); 
+                loadOffers(); 
                 goTo('customer-riwayat');
             }
         }
         
+        // Customer selesai perjalanan - CEK APAKAH PERNAH RATING DRIVER INI SEBELUMNYA
         async function selesaikanPerjalananCustomer(orderId, driverId, driverName, motor, plat, pickup, dropoff, harga, startTime) {
             if (confirm('Apakah perjalanan sudah selesai? Anda akan memberi rating untuk driver.')) {
-                let rideData = { orderId, driverId, driverName, motor, plat, pickup, dropoff, harga, startTime, endTime: Date.now(), status: 'selesai', customerId: uid, customerName: userData?.nama || 'Customer' };
-                await db.ref(`rides/${uid}/${orderId}`).set(rideData);
-                await db.ref(`active_rides/${uid}`).remove();
-                await db.ref(`driver_active_rides/${driverId}`).remove();
-                
-                let driverRef = db.ref(`drivers/${driverId}`);
-                let driverData = (await driverRef.once('value')).val() || {};
-                await driverRef.update({ totalTrip: (driverData.totalTrip || 0) + 1 });
-                
-                ratingType = 'driver';
-                currentRatingDriverId = driverId;
-                currentRatingOrderId = orderId;
-                document.getElementById('ratingModalTitle').innerHTML = '⭐ Beri Rating untuk Driver';
-                openRatingModal();
-                showToast('Perjalanan selesai! Silakan beri rating untuk driver.');
-                renderCustomerRiwayat(document.getElementById('app'));
+                try {
+                    let order = await db.ref(`orders/${orderId}`).once('value');
+                    let orderData = order.val();
+                    
+                    if (!orderData) {
+                        showToast('Order tidak ditemukan', true);
+                        return;
+                    }
+                    
+                    // CEK APAKAH CUSTOMER SUDAH PERNAH MEMBERI RATING UNTUK DRIVER INI
+                    let semuaRatingDriver = await db.ref(`ratings_driver/${driverId}`).once('value');
+                    let sudahPernahRating = false;
+                    let ratingLama = null;
+                    
+                    if (semuaRatingDriver.val()) {
+                        for (let oldOrderId in semuaRatingDriver.val()) {
+                            let rating = semuaRatingDriver.val()[oldOrderId];
+                            if (rating.customerId === uid) {
+                                sudahPernahRating = true;
+                                ratingLama = rating;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (sudahPernahRating) {
+                        showToast(`Anda sudah memberikan rating untuk driver ini sebelumnya (${ratingLama.rating} ⭐)!`);
+                        await db.ref(`active_rides/${uid}`).remove();
+                        await db.ref(`orders/${orderId}`).update({ customerSelesai: true });
+                        renderCustomerRiwayat(document.getElementById('app'));
+                        return;
+                    }
+                    
+                    await db.ref(`orders/${orderId}`).update({ 
+                        customerSelesai: true,
+                        customerEndTime: Date.now()
+                    });
+                    
+                    await db.ref(`active_rides/${uid}`).remove();
+                    
+                    if (orderData.driverSelesai === true) {
+                        let rideData = { 
+                            orderId, driverId, driverName, motor, plat, 
+                            pickup, dropoff, harga, startTime, 
+                            endTime: Date.now(), status: 'selesai', 
+                            customerId: uid, customerName: userData?.nama || 'Customer' 
+                        };
+                        await db.ref(`rides/${uid}/${orderId}`).set(rideData);
+                        await db.ref(`driver_active_rides/${driverId}`).remove();
+                        
+                        let driverRef = db.ref(`drivers/${driverId}`);
+                        let driverData = (await driverRef.once('value')).val() || {};
+                        await driverRef.update({ totalTrip: (driverData.totalTrip || 0) + 1 });
+                        
+                        let customerRef = db.ref(`customers/${uid}`);
+                        let customerData = (await customerRef.once('value')).val() || {};
+                        await customerRef.update({ totalRides: (customerData.totalRides || 0) + 1 });
+                    }
+                    
+                    ratingType = 'driver'; 
+                    currentRatingTargetId = driverId; 
+                    currentRatingOrderId = orderId;
+                    isEditRating = false;
+                    document.getElementById('ratingModalTitle').innerHTML = '⭐ Beri Rating untuk Driver';
+                    openRatingModal();
+                    showToast('Perjalanan selesai! Silakan beri rating untuk driver.');
+                    
+                    renderCustomerRiwayat(document.getElementById('app'));
+                } catch(e) {
+                    showToast('Error: ' + e.message, true);
+                }
             }
         }
         
+        // Driver selesai perjalanan - CEK APAKAH PERNAH RATING CUSTOMER INI SEBELUMNYA
         async function selesaikanPerjalananDriver(orderId, customerId, customerName, pickup, dropoff, harga, startTime) {
             if (confirm('Apakah perjalanan sudah selesai? Anda akan memberi rating untuk customer.')) {
-                let activeRide = (await db.ref(`active_rides/${customerId}`).once('value')).val();
-                if (activeRide && activeRide.orderId === orderId) {
-                    let rideData = { orderId, driverId: uid, driverName: userData?.nama || 'Driver', motor: userData?.jenisMotor || '-', plat: userData?.plat || '-', pickup, dropoff, harga, startTime, endTime: Date.now(), status: 'selesai', customerId, customerName };
-                    await db.ref(`rides/${customerId}/${orderId}`).set(rideData);
-                    await db.ref(`active_rides/${customerId}`).remove();
+                try {
+                    let order = await db.ref(`orders/${orderId}`).once('value');
+                    let orderData = order.val();
+                    
+                    if (!orderData) {
+                        showToast('Order tidak ditemukan', true);
+                        return;
+                    }
+                    
+                    // CEK APAKAH DRIVER SUDAH PERNAH MEMBERI RATING UNTUK CUSTOMER INI
+                    let semuaRatingCustomer = await db.ref(`ratings_customer/${customerId}`).once('value');
+                    let sudahPernahRating = false;
+                    let ratingLama = null;
+                    
+                    if (semuaRatingCustomer.val()) {
+                        for (let oldOrderId in semuaRatingCustomer.val()) {
+                            let rating = semuaRatingCustomer.val()[oldOrderId];
+                            if (rating.driverId === uid) {
+                                sudahPernahRating = true;
+                                ratingLama = rating;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (sudahPernahRating) {
+                        showToast(`Anda sudah memberikan rating untuk customer ini sebelumnya (${ratingLama.rating} ⭐)!`);
+                        await db.ref(`orders/${orderId}`).update({ 
+                            driverSelesai: true,
+                            driverEndTime: Date.now()
+                        });
+                        await db.ref(`driver_active_rides/${uid}`).remove();
+                        
+                        if (orderData.customerSelesai === true) {
+                            let rideData = { 
+                                orderId, driverId: uid, driverName: userData?.nama || 'Driver', 
+                                motor: userData?.jenisMotor || '-', plat: userData?.plat || '-', 
+                                pickup, dropoff, harga, startTime, 
+                                endTime: Date.now(), status: 'selesai', 
+                                customerId, customerName 
+                            };
+                            await db.ref(`rides/${customerId}/${orderId}`).set(rideData);
+                            await db.ref(`active_rides/${customerId}`).remove();
+                            
+                            let driverRef = db.ref(`drivers/${uid}`);
+                            let driverData = (await driverRef.once('value')).val() || {};
+                            await driverRef.update({ totalTrip: (driverData.totalTrip || 0) + 1 });
+                            
+                            let customerRef = db.ref(`customers/${customerId}`);
+                            let customerData = (await customerRef.once('value')).val() || {};
+                            await customerRef.update({ totalRides: (customerData.totalRides || 0) + 1 });
+                        }
+                        
+                        renderDriverRiwayat(document.getElementById('app'));
+                        return;
+                    }
+                    
+                    await db.ref(`orders/${orderId}`).update({ 
+                        driverSelesai: true,
+                        driverEndTime: Date.now()
+                    });
+                    
                     await db.ref(`driver_active_rides/${uid}`).remove();
                     
-                    let customerRef = db.ref(`customers/${customerId}`);
-                    let customerData = (await customerRef.once('value')).val() || {};
-                    await customerRef.update({ totalRides: (customerData.totalRides || 0) + 1 });
+                    if (orderData.customerSelesai === true) {
+                        let rideData = { 
+                            orderId, driverId: uid, driverName: userData?.nama || 'Driver', 
+                            motor: userData?.jenisMotor || '-', plat: userData?.plat || '-', 
+                            pickup, dropoff, harga, startTime, 
+                            endTime: Date.now(), status: 'selesai', 
+                            customerId, customerName 
+                        };
+                        await db.ref(`rides/${customerId}/${orderId}`).set(rideData);
+                        await db.ref(`active_rides/${customerId}`).remove();
+                        
+                        let driverRef = db.ref(`drivers/${uid}`);
+                        let driverData = (await driverRef.once('value')).val() || {};
+                        await driverRef.update({ totalTrip: (driverData.totalTrip || 0) + 1 });
+                        
+                        let customerRef = db.ref(`customers/${customerId}`);
+                        let customerData = (await customerRef.once('value')).val() || {};
+                        await customerRef.update({ totalRides: (customerData.totalRides || 0) + 1 });
+                    }
                     
-                    ratingType = 'customer';
-                    currentRatingCustomerId = customerId;
+                    ratingType = 'customer'; 
+                    currentRatingTargetId = customerId; 
                     currentRatingOrderId = orderId;
+                    isEditRating = false;
                     document.getElementById('ratingModalTitle').innerHTML = '⭐ Beri Rating untuk Customer';
                     openRatingModal();
                     showToast('Perjalanan selesai! Silakan beri rating untuk customer.');
+                    
                     renderDriverRiwayat(document.getElementById('app'));
-                } else showToast('Data perjalanan tidak ditemukan', true);
+                } catch(e) {
+                    showToast('Error: ' + e.message, true);
+                }
             }
         }
         
@@ -977,134 +1043,168 @@
             document.querySelectorAll('#starContainer i').forEach(star => { star.onclick = function() { selectedRating = parseInt(this.dataset.rating); updateStars(); }; });
         }
         
-        function updateStars() {
-            document.querySelectorAll('#starContainer i').forEach((star, index) => { star.className = index < selectedRating ? 'fas fa-star' : 'far fa-star'; });
+        function openRatingModalWithValue(ratingValue, reviewValue) {
+            selectedRating = ratingValue;
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                starsHtml += `<i class="${i <= ratingValue ? 'fas fa-star' : 'far fa-star'}" data-rating="${i}"></i>`;
+            }
+            document.getElementById('starContainer').innerHTML = starsHtml;
+            document.getElementById('reviewText').value = reviewValue || '';
+            document.getElementById('ratingModal').style.display = 'flex';
+            document.querySelectorAll('#starContainer i').forEach(star => { star.onclick = function() { selectedRating = parseInt(this.dataset.rating); updateStars(); }; });
+        }
+        
+        function updateStars() { 
+            document.querySelectorAll('#starContainer i').forEach((star, index) => { 
+                star.className = index < selectedRating ? 'fas fa-star' : 'far fa-star'; 
+            }); 
         }
         
         async function submitRating() {
             if (selectedRating === 0) { showToast('Pilih rating dulu!', true); return; }
             let review = document.getElementById('reviewText').value;
             
-            if (ratingType === 'driver') {
-                await db.ref(`ratings_driver/${currentRatingDriverId}/${currentRatingOrderId}`).set({ rating: selectedRating, review, customerId: uid, customerName: userData?.nama || 'Customer', createdAt: Date.now() });
-                let allRatings = (await db.ref(`ratings_driver/${currentRatingDriverId}`).once('value')).val() || {};
-                let total = 0, count = 0;
-                for (let r in allRatings) { total += allRatings[r].rating; count++; }
-                await db.ref(`drivers/${currentRatingDriverId}/rating`).set(total / count);
-                showToast('✅ Rating untuk driver telah disimpan.');
-            } else {
-                await db.ref(`ratings_customer/${currentRatingCustomerId}/${currentRatingOrderId}`).set({ rating: selectedRating, review, driverId: uid, driverName: userData?.nama || 'Driver', createdAt: Date.now() });
-                let allRatings = (await db.ref(`ratings_customer/${currentRatingCustomerId}`).once('value')).val() || {};
-                let total = 0, count = 0;
-                for (let r in allRatings) { total += allRatings[r].rating; count++; }
-                await db.ref(`customers/${currentRatingCustomerId}/rating`).set(total / count);
-                showToast('✅ Rating untuk customer telah disimpan.');
+            try {
+                if (ratingType === 'driver') {
+                    // CEK APAKAH CUSTOMER SUDAH PERNAH RATING DRIVER INI SEBELUMNYA
+                    let semuaRatingDriver = await db.ref(`ratings_driver/${currentRatingTargetId}`).once('value');
+                    let sudahPernahRating = false;
+                    
+                    if (semuaRatingDriver.val()) {
+                        for (let oldOrderId in semuaRatingDriver.val()) {
+                            let rating = semuaRatingDriver.val()[oldOrderId];
+                            if (rating.customerId === uid && oldOrderId !== currentRatingOrderId) {
+                                sudahPernahRating = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (sudahPernahRating && !isEditRating) {
+                        showToast('Anda sudah memberikan rating untuk driver ini sebelumnya!', true);
+                        closeRatingModal();
+                        return;
+                    }
+                    
+                    await db.ref(`ratings_driver/${currentRatingTargetId}/${currentRatingOrderId}`).set({ 
+                        rating: selectedRating, 
+                        review: review, 
+                        customerId: uid, 
+                        customerName: userData?.nama || 'Customer', 
+                        createdAt: Date.now() 
+                    });
+                    
+                    await db.ref(`orders/${currentRatingOrderId}`).update({ customerRated: true });
+                    
+                    let allRatings = (await db.ref(`ratings_driver/${currentRatingTargetId}`).once('value')).val() || {};
+                    let total = 0, count = 0;
+                    for (let r in allRatings) { 
+                        total += allRatings[r].rating; 
+                        count++; 
+                    }
+                    await db.ref(`drivers/${currentRatingTargetId}/rating`).set(total / count);
+                    showToast(isEditRating ? '✅ Rating driver berhasil diupdate!' : '✅ Rating untuk driver telah disimpan.');
+                } else {
+                    // CEK APAKAH DRIVER SUDAH PERNAH RATING CUSTOMER INI SEBELUMNYA
+                    let semuaRatingCustomer = await db.ref(`ratings_customer/${currentRatingTargetId}`).once('value');
+                    let sudahPernahRating = false;
+                    
+                    if (semuaRatingCustomer.val()) {
+                        for (let oldOrderId in semuaRatingCustomer.val()) {
+                            let rating = semuaRatingCustomer.val()[oldOrderId];
+                            if (rating.driverId === uid && oldOrderId !== currentRatingOrderId) {
+                                sudahPernahRating = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (sudahPernahRating && !isEditRating) {
+                        showToast('Anda sudah memberikan rating untuk customer ini sebelumnya!', true);
+                        closeRatingModal();
+                        return;
+                    }
+                    
+                    await db.ref(`ratings_customer/${currentRatingTargetId}/${currentRatingOrderId}`).set({ 
+                        rating: selectedRating, 
+                        review: review, 
+                        driverId: uid, 
+                        driverName: userData?.nama || 'Driver', 
+                        createdAt: Date.now() 
+                    });
+                    
+                    await db.ref(`orders/${currentRatingOrderId}`).update({ driverRated: true });
+                    
+                    let allRatings = (await db.ref(`ratings_customer/${currentRatingTargetId}`).once('value')).val() || {};
+                    let total = 0, count = 0;
+                    for (let r in allRatings) { 
+                        total += allRatings[r].rating; 
+                        count++; 
+                    }
+                    await db.ref(`customers/${currentRatingTargetId}/rating`).set(total / count);
+                    showToast(isEditRating ? '✅ Rating customer berhasil diupdate!' : '✅ Rating untuk customer telah disimpan.');
+                }
+                closeRatingModal();
+                
+                if (role === 'customer') {
+                    renderCustomerAkun(document.getElementById('app'));
+                    renderCustomerRiwayat(document.getElementById('app'));
+                } else {
+                    renderDriverAkun(document.getElementById('app'));
+                    renderDriverRiwayat(document.getElementById('app'));
+                }
+            } catch(e) {
+                showToast('Error: ' + e.message, true);
             }
-            closeRatingModal();
-            if (role === 'customer') renderCustomerRiwayat(document.getElementById('app'));
-            else renderDriverRiwayat(document.getElementById('app'));
+        }
+        
+        async function editRating(targetId, orderId, type, currentRating, currentReview) {
+            ratingType = type;
+            currentRatingTargetId = targetId;
+            currentRatingOrderId = orderId;
+            isEditRating = true;
+            selectedRating = currentRating;
+            
+            document.getElementById('ratingModalTitle').innerHTML = type === 'driver' ? '✏️ Edit Rating untuk Driver' : '✏️ Edit Rating untuk Customer';
+            openRatingModalWithValue(currentRating, currentReview);
         }
         
         async function showInfoDriver(driverId) {
             let d = (await db.ref(`drivers/${driverId}`).once('value')).val();
-            document.getElementById('infoModalContent').innerHTML = `
-                <div class="infoModal-avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div>
-                <h3>Informasi Driver</h3>
-                <div class="infoModal-item"><span>Nama</span><span>${d.nama || '-'}</span></div>
-                <div class="infoModal-item"><span>Motor</span><span>${d.jenisMotor || '-'}</span></div>
-                <div class="infoModal-item"><span>Plat</span><span>${d.plat || '-'}</span></div>
-                <div class="infoModal-item"><span>Rating</span><span>⭐ ${d.rating > 0 ? d.rating.toFixed(1) : '-'}</span></div>
-                <div class="infoModal-item"><span>Total Trip</span><span>${d.totalTrip || 0}</span></div>
-                <button class="btn btn-primary" onclick="closeInfoModal()">Tutup</button>
-            `;
+            document.getElementById('infoModalContent').innerHTML = `<div class="infoModal-avatar">${d.foto ? `<img src="${d.foto}">` : '🏍️'}</div><h3 style="font-size:14px;">Informasi Driver</h3><div class="infoModal-item"><span>Nama</span><span>${d.nama || '-'}</span></div><div class="infoModal-item"><span>Motor</span><span>${d.jenisMotor || '-'}</span></div><div class="infoModal-item"><span>Plat</span><span>${d.plat || '-'}</span></div><div class="infoModal-item"><span>Rating</span><span>⭐ ${d.rating > 0 ? d.rating.toFixed(1) : '-'}</span></div><div class="infoModal-item"><span>Total Trip</span><span>${d.totalTrip || 0}</span></div><button class="btn btn-primary btn-sm" onclick="closeInfoModal()" style="margin-top:8px;">Tutup</button>`;
             document.getElementById('infoModal').style.display = 'flex';
         }
-        
+
         async function renderCustomerRiwayat(container) {
             let active = (await db.ref(`active_rides/${uid}`).once('value')).val();
             let rides = Object.values((await db.ref(`rides/${uid}`).once('value')).val() || {}).reverse();
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card customer-card">
-                    <h2><i class="fas fa-history"></i> Riwayat Perjalanan</h2>
-                    ${active ? `
-                        <div class="active-ride-card">
-                            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                                <div class="avatar" style="width:50px; background:#4CAF50;">🏍️</div>
-                                <div style="flex:1;">
-                                    <div><strong>🟢 PERJALANAN AKTIF</strong> <span class="badge-aktif">Dalam Perjalanan</span></div>
-                                    <div class="name-text">Driver: ${active.driverName}</div>
-                                    <div class="detail-text">🏍️ ${active.motor || '-'} | 🔢 ${active.plat || '-'}</div>
-                                    <div class="detail-text">📍 ${active.pickup} → ${active.dropoff}</div>
-                                    <div class="detail-text">💰 Rp ${active.harga?.toLocaleString()}</div>
-                                </div>
-                                <button class="btn btn-success" onclick="selesaikanPerjalananCustomer('${active.orderId}','${active.driverId}','${active.driverName}','${active.motor}','${active.plat}','${active.pickup}','${active.dropoff}',${active.harga},${active.startTime})">✓ SELESAIKAN</button>
-                            </div>
-                        </div>
-                    ` : '<div style="background:#E8F5E9; padding:12px; border-radius:16px; margin-bottom:16px; text-align:center;">✅ Tidak ada perjalanan aktif</div>'}
-                    <h3 style="margin-top:16px;">📜 Riwayat Selesai</h3>
-                    ${rides.length === 0 ? '<p style="padding:40px;text-align:center; color:#999;">Belum ada riwayat</p>' : rides.map(r => `
-                        <div class="history-item selesai">
-                            <div><strong>${r.driverName || 'Driver'}</strong> <span class="badge-selesai">✓ Selesai</span></div>
-                            <div class="detail-text">🏍️ ${r.motor || '-'} | 🔢 ${r.plat || '-'}</div>
-                            <div class="detail-text">📍 ${r.pickup} → ${r.dropoff}</div>
-                            <div class="detail-text">💰 Rp ${r.harga?.toLocaleString()} | 📅 ${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-history"></i> Riwayat Perjalanan</h2>${active ? `<div class="active-ride-card"><div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;"><div class="avatar" style="width:45px; background:#4CAF50;">🏍️</div><div style="flex:1;"><div><strong>🟢 PERJALANAN AKTIF</strong> <span class="badge-aktif">Dalam Perjalanan</span></div><div class="name-text">Driver: ${active.driverName}</div><div class="detail-text">🏍️ ${active.motor || '-'} | 🔢 ${active.plat || '-'}</div><div class="detail-text">📍 ${active.pickup} → ${active.dropoff}</div><div class="detail-text">💰 Rp ${active.harga?.toLocaleString()}</div></div><button class="btn btn-success btn-sm" onclick="selesaikanPerjalananCustomer('${active.orderId}','${active.driverId}','${active.driverName}','${active.motor}','${active.plat}','${active.pickup}','${active.dropoff}',${active.harga},${active.startTime})">✓ SELESAIKAN & BERI RATING</button></div></div>` : '<div style="background:#E8F5E9; padding:10px; border-radius:16px; margin-bottom:16px; text-align:center;">✅ Tidak ada perjalanan aktif</div>'}<h3 style="margin-top:14px;">📜 Riwayat Selesai</h3>${rides.length === 0 ? '<p style="padding:40px;text-align:center; color:#999;">Belum ada riwayat</p>' : rides.map(r => `<div class="history-item selesai"><div><strong>${r.driverName || 'Driver'}</strong> <span class="badge-selesai">✓ Selesai</span></div><div class="detail-text">🏍️ ${r.motor || '-'} | 🔢 ${r.plat || '-'}</div><div class="detail-text">📍 ${r.pickup} → ${r.dropoff}</div><div class="detail-text">💰 Rp ${r.harga?.toLocaleString()} | 📅 ${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}</div></div>`).join('')}</div>`;
         }
-        
+
         async function renderDriverRiwayat(container) {
             let active = (await db.ref(`driver_active_rides/${uid}`).once('value')).val();
             let semuaRides = [];
             let ridesSnap = await db.ref('rides').once('value');
-            if (ridesSnap.val()) {
-                for (let cid in ridesSnap.val()) {
-                    for (let oid in ridesSnap.val()[cid]) {
-                        let ride = ridesSnap.val()[cid][oid];
-                        if (ride && ride.driverId === uid) semuaRides.push(ride);
-                    }
-                }
+            if (ridesSnap.val()) { 
+                for (let cid in ridesSnap.val()) { 
+                    for (let oid in ridesSnap.val()[cid]) { 
+                        let ride = ridesSnap.val()[cid][oid]; 
+                        if (ride && ride.driverId === uid) semuaRides.push(ride); 
+                    } 
+                } 
             }
             semuaRides.sort((a,b) => (b.endTime || b.startTime) - (a.endTime || a.startTime));
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card driver-card">
-                    <h2><i class="fas fa-users"></i> Riwayat Customer</h2>
-                    ${active ? `
-                        <div class="active-ride-card">
-                            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                                <div class="avatar" style="width:50px; background:#4CAF50;">👤</div>
-                                <div style="flex:1;">
-                                    <div><strong>🟢 PERJALANAN AKTIF</strong> <span class="badge-aktif">Menjemput</span></div>
-                                    <div class="name-text">Customer: ${active.customerName}</div>
-                                    <div class="detail-text">📍 ${active.pickup} → ${active.dropoff}</div>
-                                    <div class="detail-text">💰 Rp ${active.harga?.toLocaleString()}</div>
-                                </div>
-                                <button class="btn btn-success" onclick="selesaikanPerjalananDriver('${active.orderId}','${active.customerId}','${active.customerName}','${active.pickup}','${active.dropoff}',${active.harga},${active.startTime})">✓ SELESAIKAN</button>
-                            </div>
-                        </div>
-                    ` : '<div style="background:#E8F5E9; padding:12px; border-radius:16px; margin-bottom:16px; text-align:center;">✅ Tidak ada perjalanan aktif</div>'}
-                    <h3 style="margin-top:16px;">📜 Riwayat Selesai</h3>
-                    ${semuaRides.length === 0 ? '<p style="padding:40px;text-align:center">Belum ada riwayat</p>' : semuaRides.map(r => `
-                        <div class="history-item selesai">
-                            <div><strong>👤 ${r.customerName || r.customerNama || 'Customer'}</strong> <span class="badge-selesai">✓ Selesai</span></div>
-                            <div class="detail-text">📍 ${r.pickup} → ${r.dropoff}</div>
-                            <div class="detail-text">💰 Rp ${r.harga?.toLocaleString()} | 📅 ${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            
+            container.innerHTML = `${bottomNav()}<div class="card driver-card"><h2><i class="fas fa-users"></i> Riwayat Perjalanan</h2>
+            ${active ? `<div class="active-ride-card"><div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;"><div class="avatar" style="width:45px; background:#4CAF50;">👤</div><div style="flex:1;"><div><strong>🟢 PERJALANAN AKTIF</strong> <span class="badge-aktif">Menjemput</span></div><div class="name-text">Customer: ${active.customerName}</div><div class="detail-text">📍 ${active.pickup} → ${active.dropoff}</div><div class="detail-text">💰 Rp ${active.harga?.toLocaleString()}</div></div><button class="btn btn-success btn-sm" onclick="selesaikanPerjalananDriver('${active.orderId}','${active.customerId}','${active.customerName}','${active.pickup}','${active.dropoff}',${active.harga},${active.startTime})">✓ SELESAIKAN & BERI RATING</button></div></div>` : '<div style="background:#E8F5E9; padding:10px; border-radius:16px; margin-bottom:16px; text-align:center;">✅ Tidak ada perjalanan aktif</div>'}
+            <h3 style="margin-top:14px;">📜 Riwayat Selesai</h3>${semuaRides.length === 0 ? '<p style="padding:40px;text-align:center">Belum ada riwayat</p>' : semuaRides.map(r => `<div class="history-item selesai"><div><strong>👤 ${r.customerName || r.customerNama || 'Customer'}</strong> <span class="badge-selesai">✓ Selesai</span></div><div class="detail-text">📍 ${r.pickup} → ${r.dropoff}</div><div class="detail-text">💰 Rp ${r.harga?.toLocaleString()} | 📅 ${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}</div></div>`).join('')}</div>`;
         }
-        
-        // CUSTOMER STATISTIK
+
         async function renderCustomerStatistik(container) {
             let snap = await db.ref(`rides/${uid}`).once('value');
             let semuaRides = snap.val() ? Object.values(snap.val()) : [];
-            let tahunMulai = 2026;
-            let tahunSekarang = new Date().getFullYear();
-            let tahunMax = Math.max(tahunSekarang + 2, 2030);
+            let tahunMulai = 2026, tahunSekarang = new Date().getFullYear(), tahunMax = Math.max(tahunSekarang + 2, 2030);
             let daftarTahun = [];
             for (let tahun = tahunMulai; tahun <= tahunMax; tahun++) daftarTahun.push(tahun);
             let dataTahun = new Set();
@@ -1112,94 +1212,43 @@
             let semuaTahun = new Set([...daftarTahun, ...dataTahun]);
             daftarTahun = Array.from(semuaTahun).sort((a,b) => b - a);
             if (!daftarTahun.includes(statistikTahun)) statistikTahun = daftarTahun[0];
-            
-            let rides = semuaRides.filter(r => { let tahun = new Date(r.endTime || r.startTime).getFullYear(); return tahun === statistikTahun; });
+            let rides = semuaRides.filter(r => new Date(r.endTime || r.startTime).getFullYear() === statistikTahun);
             let monthly = new Array(12).fill(0), monthlyHarga = new Array(12).fill(0);
             rides.forEach(r => { let d = new Date(r.endTime || r.startTime); if (!isNaN(d.getMonth())) { monthly[d.getMonth()]++; monthlyHarga[d.getMonth()] += (r.harga || 0); } });
             let total = rides.length, totalPrice = rides.reduce((a,b) => a + (b.harga || 0), 0);
             let namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-            
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card customer-card">
-                    <h2><i class="fas fa-chart-line"></i> Statistik Pengeluaran</h2>
-                    <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap;">
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <i class="fas fa-calendar-alt" style="color:#FFD700; font-size:18px;"></i>
-                            <select id="tahunSelect" class="input" style="width:auto; margin:0; padding:8px 16px;" onchange="gantiTahunStatistik()">
-                                ${daftarTahun.map(t => `<option value="${t}" ${t === statistikTahun ? 'selected' : ''}>${t}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div style="background:#FFF8E1; padding:5px 12px; border-radius:20px;"><span style="font-size:12px;">📅 Total ${total} perjalanan di ${statistikTahun}</span></div>
-                    </div>
-                    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                        <div style="flex:1; background:linear-gradient(135deg,#FFF8E1,#FFECB3); padding:15px; border-radius:20px; text-align:center;">
-                            <div style="font-size:32px; font-weight:800; color:#FF8F00;">${total}</div>
-                            <div style="font-size:12px; color:#666;">Total Perjalanan</div>
-                        </div>
-                        <div style="flex:1; background:linear-gradient(135deg,#FFF8E1,#FFECB3); padding:15px; border-radius:20px; text-align:center;">
-                            <div style="font-size:32px; font-weight:800; color:#FF8F00;">Rp ${totalPrice.toLocaleString()}</div>
-                            <div style="font-size:12px; color:#666;">Total Pengeluaran</div>
-                        </div>
-                    </div>
-                    <canvas id="statCanvas" style="max-height:250px; width:100%; background:white; border-radius:16px; padding:8px;"></canvas>
-                    <div style="margin-top:20px;">
-                        <div style="font-weight:600; margin-bottom:10px;">📊 Rata-rata per bulan (${statistikTahun})</div>
-                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
-                            ${['Jan-Mar', 'Apr-Jun', 'Jul-Sep', 'Okt-Des'].map((periode, idx) => {
-                                let start = idx * 3, end = start + 3, totalTrip = 0, totalHarga = 0;
-                                for (let i = start; i < end; i++) { totalTrip += monthly[i]; totalHarga += monthlyHarga[i]; }
-                                return `<div style="background:#E8EAF6; padding:8px; border-radius:16px; text-align:center;">
-                                    <div style="font-size:11px; color:#666;">${periode}</div>
-                                    <div style="font-size:16px; font-weight:700;">${Math.round(totalTrip/3)} trip</div>
-                                    <div style="font-size:11px; color:#FF8F00;">Rp ${Math.round(totalHarga/3).toLocaleString()}</div>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="margin-top:16px; background:#2196F3;" onclick="downloadStatistikCustomer()"><i class="fas fa-download"></i> Download Statistik (CSV)</button>
-                </div>
-            `;
-            
+            container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-chart-line"></i> Statistik Pengeluaran</h2><div style="display:flex; gap:8px; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap;"><div style="display:flex; gap:6px; align-items:center;"><i class="fas fa-calendar-alt" style="color:#FFD700;"></i><select id="tahunSelect" class="input" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onchange="gantiTahunStatistik()">${daftarTahun.map(t => `<option value="${t}" ${t === statistikTahun ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div style="background:#FFF8E1; padding:4px 10px; border-radius:16px;"><span style="font-size:11px;">📅 Total ${total} perjalanan di ${statistikTahun}</span></div></div><div style="display:flex; gap:8px; margin-bottom:16px;"><div style="flex:1; background:linear-gradient(135deg,#FFF8E1,#FFECB3); padding:12px; border-radius:16px; text-align:center;"><div style="font-size:24px; font-weight:800; color:#FF8F00;">${total}</div><div style="font-size:10px; color:#666;">Total Perjalanan</div></div><div style="flex:1; background:linear-gradient(135deg,#FFF8E1,#FFECB3); padding:12px; border-radius:16px; text-align:center;"><div style="font-size:24px; font-weight:800; color:#FF8F00;">Rp ${totalPrice.toLocaleString()}</div><div style="font-size:10px; color:#666;">Total Pengeluaran</div></div></div><canvas id="statCanvas" style="max-height:200px;"></canvas><button class="btn btn-primary" style="margin-top:14px; background:#2196F3; padding:10px;" onclick="downloadStatistikCustomerPDF()"><i class="fas fa-file-pdf"></i> Download Statistik Pengeluaran (PDF)</button></div>`;
             let ctx = document.getElementById('statCanvas')?.getContext('2d');
-            if (ctx) {
-                if (statChart) statChart.destroy();
-                statChart = new Chart(ctx, { type: 'bar', data: { labels: namaBulan, datasets: [
-                    { label: 'Jumlah Pesanan', data: monthly, backgroundColor: '#FFD700', borderRadius: 8, yAxisID: 'y' },
-                    { label: 'Total Harga (Rp)', data: monthlyHarga, backgroundColor: '#2196F3', borderRadius: 8, yAxisID: 'y1' }
-                ] }, options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: function(ctx) { let label = ctx.dataset.label || ''; let val = ctx.raw; return ctx.dataset.label === 'Total Harga (Rp)' ? label + ': Rp ' + val.toLocaleString() : label + ': ' + val + ' trip'; } } } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah Pesanan', color: '#FF8F00' }, ticks: { stepSize: 1 } }, y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Total Harga (Rp)', color: '#2196F3' }, grid: { drawOnChartArea: false } } } } });
-            }
+            if (ctx) { if (statChart) statChart.destroy(); statChart = new Chart(ctx, { type: 'bar', data: { labels: namaBulan, datasets: [{ label: 'Jumlah Pesanan', data: monthly, backgroundColor: '#FFD700', borderRadius: 6, yAxisID: 'y' }, { label: 'Total Harga (Rp)', data: monthlyHarga, backgroundColor: '#2196F3', borderRadius: 6, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: function(ctx) { let val = ctx.raw; return ctx.dataset.label === 'Total Harga (Rp)' ? 'Rp ' + val.toLocaleString() : val + ' trip'; } } } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah', color: '#FF8F00', font: { size: 10 } }, ticks: { stepSize: 1 } }, y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Harga (Rp)', color: '#2196F3', font: { size: 10 } }, grid: { drawOnChartArea: false } } } } }); }
         }
         
-        async function downloadStatistikCustomer() {
+        async function downloadStatistikCustomerPDF() {
             let snap = await db.ref(`rides/${uid}`).once('value');
             let semuaRides = snap.val() ? Object.values(snap.val()) : [];
             let rides = semuaRides.filter(r => new Date(r.endTime || r.startTime).getFullYear() === statistikTahun);
             rides.sort((a,b) => (a.endTime || a.startTime) - (b.endTime || b.startTime));
-            let csvRows = [['Tanggal','Driver','Motor','Plat','Pickup','Dropoff','Harga','Status']];
-            rides.forEach(r => { csvRows.push([`"${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}"`,`"${r.driverName || '-'}"`,`"${r.motor || '-'}"`,`"${r.plat || '-'}"`,`"${r.pickup || '-'}"`,`"${r.dropoff || '-'}"`,r.harga || 0,'Selesai']); });
-            let totalHarga = rides.reduce((a,b) => a + (b.harga || 0), 0);
-            csvRows.push(['','','','','','TOTAL',totalHarga,'']);
-            let csvContent = csvRows.map(row => row.join(',')).join('\n');
-            let blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.setAttribute('download', `statistik_pengeluaran_${statistikTahun}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(link.href);
-            showToast(`✅ Download statistik ${statistikTahun} berhasil!`);
+            let totalPerjalanan = rides.length, totalPengeluaran = rides.reduce((a,b) => a + (b.harga || 0), 0);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            doc.setFontSize(16); doc.text(`LAPORAN STATISTIK PENGELUARAN`, 14, 20);
+            doc.setFontSize(11); doc.text(`Tahun: ${statistikTahun}`, 14, 30);
+            doc.text(`Total Perjalanan: ${totalPerjalanan} kali`, 14, 38);
+            doc.text(`Total Pengeluaran: Rp ${totalPengeluaran.toLocaleString()}`, 14, 46);
+            let bulanData = [], namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            for (let i = 0; i < 12; i++) { let bulanRides = rides.filter(r => new Date(r.endTime || r.startTime).getMonth() === i); let totalHargaBulan = bulanRides.reduce((a,b) => a + (b.harga || 0), 0); if (totalHargaBulan > 0 || bulanRides.length > 0) bulanData.push([namaBulan[i], bulanRides.length, `Rp ${totalHargaBulan.toLocaleString()}`]); }
+            if (bulanData.length === 0) bulanData.push(['Tidak ada data', 0, 'Rp 0']);
+            doc.autoTable({ startY: 55, head: [['Bulan', 'Jumlah Perjalanan', 'Total Harga']], body: bulanData, foot: [['TOTAL', totalPerjalanan, `Rp ${totalPengeluaran.toLocaleString()}`]], theme: 'striped', headStyles: { fillColor: [255, 215, 0], textColor: 0 }, footStyles: { fillColor: [33, 150, 243], textColor: 255, fontStyle: 'bold' } });
+            doc.setFontSize(10); doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 14, doc.lastAutoTable.finalY + 10);
+            doc.save(`statistik_pengeluaran_${statistikTahun}.pdf`);
+            showToast(`✅ Download PDF statistik pengeluaran ${statistikTahun} berhasil!`);
         }
         
         async function gantiTahunStatistik() { let select = document.getElementById('tahunSelect'); if (select) { statistikTahun = parseInt(select.value); renderCustomerStatistik(document.getElementById('app')); } }
-        
-        // DRIVER STATISTIK PENDAPATAN
+
         async function renderDriverStatistik(container) {
             let semuaRides = [];
             let ridesSnap = await db.ref('rides').once('value');
-            if (ridesSnap.val()) {
-                for (let cid in ridesSnap.val()) {
-                    for (let oid in ridesSnap.val()[cid]) {
-                        let ride = ridesSnap.val()[cid][oid];
-                        if (ride && ride.driverId === uid) semuaRides.push(ride);
-                    }
-                }
-            }
+            if (ridesSnap.val()) { for (let cid in ridesSnap.val()) { for (let oid in ridesSnap.val()[cid]) { let ride = ridesSnap.val()[cid][oid]; if (ride && ride.driverId === uid) semuaRides.push(ride); } } }
             let tahunMulai = 2026, tahunSekarang = new Date().getFullYear(), tahunMax = Math.max(tahunSekarang + 2, 2030);
             let daftarTahun = [];
             for (let tahun = tahunMulai; tahun <= tahunMax; tahun++) daftarTahun.push(tahun);
@@ -1208,195 +1257,158 @@
             let semuaTahun = new Set([...daftarTahun, ...dataTahun]);
             daftarTahun = Array.from(semuaTahun).sort((a,b) => b - a);
             if (!daftarTahun.includes(driverStatistikTahun)) driverStatistikTahun = daftarTahun[0];
-            
             let rides = semuaRides.filter(r => new Date(r.endTime || r.startTime).getFullYear() === driverStatistikTahun);
             let monthly = new Array(12).fill(0), monthlyPendapatan = new Array(12).fill(0);
             rides.forEach(r => { let d = new Date(r.endTime || r.startTime); if (!isNaN(d.getMonth())) { monthly[d.getMonth()]++; monthlyPendapatan[d.getMonth()] += (r.harga || 0); } });
             let total = rides.length, totalPendapatan = rides.reduce((a,b) => a + (b.harga || 0), 0);
             let namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
-            
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card driver-card">
-                    <h2><i class="fas fa-chart-line"></i> Statistik Pendapatan</h2>
-                    <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap;">
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <i class="fas fa-calendar-alt" style="color:#FFD700; font-size:18px;"></i>
-                            <select id="driverTahunSelect" class="input" style="width:auto; margin:0; padding:8px 16px;" onchange="gantiTahunDriverStatistik()">
-                                ${daftarTahun.map(t => `<option value="${t}" ${t === driverStatistikTahun ? 'selected' : ''}>${t}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div style="background:#E3F2FD; padding:5px 12px; border-radius:20px;"><span style="font-size:12px;">📅 Total ${total} perjalanan di ${driverStatistikTahun}</span></div>
-                    </div>
-                    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                        <div style="flex:1; background:linear-gradient(135deg,#E3F2FD,#BBDEFB); padding:15px; border-radius:20px; text-align:center;">
-                            <div style="font-size:32px; font-weight:800; color:#2196F3;">${total}</div>
-                            <div style="font-size:12px; color:#666;">Total Perjalanan</div>
-                        </div>
-                        <div style="flex:1; background:linear-gradient(135deg,#E3F2FD,#BBDEFB); padding:15px; border-radius:20px; text-align:center;">
-                            <div style="font-size:32px; font-weight:800; color:#2196F3;">Rp ${totalPendapatan.toLocaleString()}</div>
-                            <div style="font-size:12px; color:#666;">Total Pendapatan</div>
-                        </div>
-                    </div>
-                    <canvas id="driverStatCanvas" style="max-height:250px; width:100%; background:white; border-radius:16px; padding:8px;"></canvas>
-                    <div style="margin-top:20px;">
-                        <div style="font-weight:600; margin-bottom:10px;">📊 Rata-rata per bulan (${driverStatistikTahun})</div>
-                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
-                            ${['Jan-Mar', 'Apr-Jun', 'Jul-Sep', 'Okt-Des'].map((periode, idx) => {
-                                let start = idx * 3, end = start + 3, totalTrip = 0, totalPendapatan = 0;
-                                for (let i = start; i < end; i++) { totalTrip += monthly[i]; totalPendapatan += monthlyPendapatan[i]; }
-                                return `<div style="background:#E8EAF6; padding:8px; border-radius:16px; text-align:center;">
-                                    <div style="font-size:11px; color:#666;">${periode}</div>
-                                    <div style="font-size:16px; font-weight:700;">${Math.round(totalTrip/3)} trip</div>
-                                    <div style="font-size:11px; color:#2196F3;">Rp ${Math.round(totalPendapatan/3).toLocaleString()}</div>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="margin-top:16px; background:#2196F3;" onclick="downloadStatistikDriver()"><i class="fas fa-download"></i> Download Statistik Pendapatan (CSV)</button>
-                </div>
-            `;
-            
+            container.innerHTML = `${bottomNav()}<div class="card driver-card"><h2><i class="fas fa-chart-line"></i> Statistik Pendapatan</h2><div style="display:flex; gap:8px; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap;"><div style="display:flex; gap:6px; align-items:center;"><i class="fas fa-calendar-alt" style="color:#FFD700;"></i><select id="driverTahunSelect" class="input" style="width:auto; margin:0; padding:6px 12px; font-size:12px;" onchange="gantiTahunDriverStatistik()">${daftarTahun.map(t => `<option value="${t}" ${t === driverStatistikTahun ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div style="background:#E3F2FD; padding:4px 10px; border-radius:16px;"><span style="font-size:11px;">📅 Total ${total} perjalanan di ${driverStatistikTahun}</span></div></div><div style="display:flex; gap:8px; margin-bottom:16px;"><div style="flex:1; background:linear-gradient(135deg,#E3F2FD,#BBDEFB); padding:12px; border-radius:16px; text-align:center;"><div style="font-size:24px; font-weight:800; color:#2196F3;">${total}</div><div style="font-size:10px; color:#666;">Total Perjalanan</div></div><div style="flex:1; background:linear-gradient(135deg,#E3F2FD,#BBDEFB); padding:12px; border-radius:16px; text-align:center;"><div style="font-size:24px; font-weight:800; color:#2196F3;">Rp ${totalPendapatan.toLocaleString()}</div><div style="font-size:10px; color:#666;">Total Pendapatan</div></div></div><canvas id="driverStatCanvas" style="max-height:200px;"></canvas><button class="btn btn-primary" style="margin-top:14px; background:#2196F3; padding:10px;" onclick="downloadStatistikDriverPDF()"><i class="fas fa-file-pdf"></i> Download Statistik Pendapatan (PDF)</button></div>`;
             let ctx = document.getElementById('driverStatCanvas')?.getContext('2d');
-            if (ctx) {
-                if (driverStatChart) driverStatChart.destroy();
-                driverStatChart = new Chart(ctx, { type: 'bar', data: { labels: namaBulan, datasets: [
-                    { label: 'Jumlah Perjalanan', data: monthly, backgroundColor: '#FFD700', borderRadius: 8, yAxisID: 'y' },
-                    { label: 'Pendapatan (Rp)', data: monthlyPendapatan, backgroundColor: '#4CAF50', borderRadius: 8, yAxisID: 'y1' }
-                ] }, options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: function(ctx) { let label = ctx.dataset.label || ''; let val = ctx.raw; return ctx.dataset.label === 'Pendapatan (Rp)' ? label + ': Rp ' + val.toLocaleString() : label + ': ' + val + ' trip'; } } } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah Perjalanan', color: '#FF8F00' }, ticks: { stepSize: 1 } }, y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Pendapatan (Rp)', color: '#4CAF50' }, grid: { drawOnChartArea: false } } } } });
-            }
+            if (ctx) { if (driverStatChart) driverStatChart.destroy(); driverStatChart = new Chart(ctx, { type: 'bar', data: { labels: namaBulan, datasets: [{ label: 'Jumlah Perjalanan', data: monthly, backgroundColor: '#FFD700', borderRadius: 6, yAxisID: 'y' }, { label: 'Pendapatan (Rp)', data: monthlyPendapatan, backgroundColor: '#4CAF50', borderRadius: 6, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: function(ctx) { let val = ctx.raw; return ctx.dataset.label === 'Pendapatan (Rp)' ? 'Rp ' + val.toLocaleString() : val + ' trip'; } } } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Jumlah', color: '#FF8F00', font: { size: 10 } }, ticks: { stepSize: 1 } }, y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Pendapatan (Rp)', color: '#4CAF50', font: { size: 10 } }, grid: { drawOnChartArea: false } } } } }); }
+        }
+        
+        async function downloadStatistikDriverPDF() {
+            let semuaRides = [];
+            let ridesSnap = await db.ref('rides').once('value');
+            if (ridesSnap.val()) { for (let cid in ridesSnap.val()) { for (let oid in ridesSnap.val()[cid]) { let ride = ridesSnap.val()[cid][oid]; if (ride && ride.driverId === uid) semuaRides.push(ride); } } }
+            let rides = semuaRides.filter(r => new Date(r.endTime || r.startTime).getFullYear() === driverStatistikTahun);
+            rides.sort((a,b) => (a.endTime || a.startTime) - (b.endTime || b.startTime));
+            let totalPerjalanan = rides.length, totalPendapatan = rides.reduce((a,b) => a + (b.harga || 0), 0);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            doc.setFontSize(16); doc.text(`LAPORAN STATISTIK PENDAPATAN DRIVER`, 14, 20);
+            doc.setFontSize(11); doc.text(`Tahun: ${driverStatistikTahun}`, 14, 30);
+            doc.text(`Total Perjalanan: ${totalPerjalanan} kali`, 14, 38);
+            doc.text(`Total Pendapatan: Rp ${totalPendapatan.toLocaleString()}`, 14, 46);
+            let bulanData = [], namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            for (let i = 0; i < 12; i++) { let bulanRides = rides.filter(r => new Date(r.endTime || r.startTime).getMonth() === i); let totalPendapatanBulan = bulanRides.reduce((a,b) => a + (b.harga || 0), 0); if (totalPendapatanBulan > 0 || bulanRides.length > 0) bulanData.push([namaBulan[i], bulanRides.length, `Rp ${totalPendapatanBulan.toLocaleString()}`]); }
+            if (bulanData.length === 0) bulanData.push(['Tidak ada data', 0, 'Rp 0']);
+            doc.autoTable({ startY: 55, head: [['Bulan', 'Jumlah Perjalanan', 'Pendapatan']], body: bulanData, foot: [['TOTAL', totalPerjalanan, `Rp ${totalPendapatan.toLocaleString()}`]], theme: 'striped', headStyles: { fillColor: [33, 150, 243], textColor: 255 }, footStyles: { fillColor: [255, 215, 0], textColor: 0, fontStyle: 'bold' } });
+            doc.setFontSize(10); doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 14, doc.lastAutoTable.finalY + 10);
+            doc.save(`statistik_pendapatan_${driverStatistikTahun}.pdf`);
+            showToast(`✅ Download PDF statistik pendapatan ${driverStatistikTahun} berhasil!`);
         }
         
         async function gantiTahunDriverStatistik() { let select = document.getElementById('driverTahunSelect'); if (select) { driverStatistikTahun = parseInt(select.value); renderDriverStatistik(document.getElementById('app')); } }
-        
-        async function downloadStatistikDriver() {
-            let semuaRides = [];
-            let ridesSnap = await db.ref('rides').once('value');
-            if (ridesSnap.val()) {
-                for (let cid in ridesSnap.val()) {
-                    for (let oid in ridesSnap.val()[cid]) {
-                        let ride = ridesSnap.val()[cid][oid];
-                        if (ride && ride.driverId === uid) semuaRides.push(ride);
-                    }
-                }
-            }
-            let rides = semuaRides.filter(r => new Date(r.endTime || r.startTime).getFullYear() === driverStatistikTahun);
-            rides.sort((a,b) => (a.endTime || a.startTime) - (b.endTime || b.startTime));
-            let csvRows = [['Tanggal','Customer','Pickup','Dropoff','Pendapatan','Status']];
-            rides.forEach(r => { csvRows.push([`"${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}"`,`"${r.customerName || r.customerNama || '-'}"`,`"${r.pickup || '-'}"`,`"${r.dropoff || '-'}"`,r.harga || 0,'Selesai']); });
-            let totalPendapatan = rides.reduce((a,b) => a + (b.harga || 0), 0);
-            csvRows.push(['','','','TOTAL PENDAPATAN',totalPendapatan,'']);
-            let csvContent = csvRows.map(row => row.join(',')).join('\n');
-            let blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.setAttribute('download', `statistik_pendapatan_${driverStatistikTahun}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(link.href);
-            showToast(`✅ Download statistik pendapatan ${driverStatistikTahun} berhasil!`);
-        }
-        
+
         async function renderCustomerAkun(container) {
             let data = (await db.ref(`customers/${uid}`).once('value')).val() || {};
             let rides = await db.ref(`rides/${uid}`).once('value');
             let totalRides = rides.val() ? Object.values(rides.val()).length : 0;
+            
             let ratingTotal = 0, ratingCount = 0;
+            let ratingsReceived = [];
             let revSnap = await db.ref(`ratings_customer/${uid}`).once('value');
-            let reviews = revSnap.val();
-            if (reviews) { for (let rev of Object.values(reviews)) { ratingTotal += rev.rating; ratingCount++; } }
+            if (revSnap.val()) { 
+                for (let [orderId, rev] of Object.entries(revSnap.val())) { 
+                    ratingTotal += rev.rating; 
+                    ratingCount++;
+                    ratingsReceived.push({ 
+                        rating: rev.rating, 
+                        review: rev.review, 
+                        dari: rev.driverName || 'Driver', 
+                        tanggal: new Date(rev.createdAt).toLocaleDateString('id-ID'), 
+                        orderId: orderId 
+                    });
+                } 
+            }
             let avgRating = ratingCount > 0 ? (ratingTotal / ratingCount).toFixed(1) : '-';
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card customer-card">
-                    <div class="profile-avatar-lg" onclick="pilihFotoCustomer()">${data.foto ? `<img src="${data.foto}">` : '👤'}</div>
-                    <div class="info-row"><span>Nama</span><span><strong>${data.nama || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#FFD700" onclick="editNamaCustomer()"></i></span></div>
-                    <div class="info-row"><span>Email</span><span><strong>${userEmail}</strong></span></div>
-                    <div class="info-row"><span>Total Perjalanan</span><span><strong>${totalRides} kali</strong></span></div>
-                    <div class="info-row"><span>⭐ Rating dari Driver</span><span><strong>${avgRating} ⭐</strong></span></div>
-                </div>
-            `;
+            
+            let ratingsGiven = [];
+            let givenSnap = await db.ref(`ratings_driver`).once('value');
+            if (givenSnap.val()) {
+                for (let driverId in givenSnap.val()) {
+                    for (let orderId in givenSnap.val()[driverId]) {
+                        let rev = givenSnap.val()[driverId][orderId];
+                        if (rev.customerId === uid) {
+                            let driverData = (await db.ref(`drivers/${driverId}`).once('value')).val();
+                            ratingsGiven.push({ 
+                                rating: rev.rating, 
+                                review: rev.review, 
+                                kepada: driverData?.nama || 'Driver', 
+                                driverId: driverId,
+                                tanggal: new Date(rev.createdAt).toLocaleDateString('id-ID'), 
+                                orderId: orderId 
+                            });
+                        }
+                    }
+                }
+            }
+            
+            container.innerHTML = `${bottomNav()}<div class="card customer-card"><div class="profile-avatar-lg" onclick="pilihFotoCustomer()">${data.foto ? `<img src="${data.foto}">` : '👤'}</div><div class="info-row"><span>Nama</span><span><strong>${data.nama || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#FFD700" onclick="editNamaCustomer()"></i></span></div><div class="info-row"><span>Email</span><span><strong>${userEmail}</strong></span></div><div class="info-row"><span>Total Perjalanan</span><span><strong>${totalRides} kali</strong></span></div><div class="info-row"><span>⭐ Rating dari Driver</span><span><strong>${avgRating} ⭐</strong></span></div></div>
+            <div class="card customer-card"><h3><i class="fas fa-star"></i> Rating yang Diterima dari Driver</h3>${ratingsReceived.length === 0 ? '<p class="detail-text">Belum ada rating</p>' : ratingsReceived.map(r => `<div class="rating-item"><div class="rating-stars">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div><div class="detail-text">Dari: ${r.dari}</div><div class="detail-text">${r.review || 'Tidak ada review'}</div><div class="detail-text">📅 ${r.tanggal}</div></div>`).join('')}</div>
+            <div class="card customer-card"><h3><i class="fas fa-pen"></i> Rating yang Diberikan ke Driver</h3>${ratingsGiven.length === 0 ? '<p class="detail-text">Belum memberikan rating</p>' : ratingsGiven.map(r => `<div class="rating-item"><div class="rating-stars">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div><div class="detail-text">Kepada: ${r.kepada}</div><div class="detail-text">${r.review || 'Tidak ada review'}</div><div class="detail-text">📅 ${r.tanggal}</div><button class="btn-edit-rating" onclick="editRating('${r.driverId}','${r.orderId}','driver',${r.rating},'${(r.review || '').replace(/'/g, "\\'")}')">✏️ Edit Rating</button></div>`).join('')}</div>`;
         }
         
         async function renderDriverAkun(container) {
             let data = (await db.ref(`drivers/${uid}`).once('value')).val() || {};
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card driver-card">
-                    <div class="profile-avatar-lg" onclick="pilihFotoDriver()">${data.foto ? `<img src="${data.foto}">` : '🏍️'}</div>
-                    <div class="info-row"><span>Nama</span><span><strong>${data.nama || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#2196F3" onclick="editDriver('nama')"></i></span></div>
-                    <div class="info-row"><span>Jenis Motor</span><span><strong>${data.jenisMotor || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#2196F3" onclick="editDriver('jenisMotor')"></i></span></div>
-                    <div class="info-row"><span>Plat</span><span><strong>${data.plat || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#2196F3" onclick="editDriver('plat')"></i></span></div>
-                    <div class="info-row"><span>Email</span><span><strong>${userEmail}</strong></span></div>
-                    <div class="info-row"><span>⭐ Rating</span><span><strong>${data.rating > 0 ? data.rating.toFixed(1) : '-'} ⭐</strong></span></div>
-                    <div class="info-row"><span>Total Trip</span><span><strong>${data.totalTrip || 0} kali</strong></span></div>
-                </div>
-            `;
-        }
-        
-        function pilihFotoCustomer() {
-            let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
-            input.onchange = function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    showToast('Mengupload foto...');
-                    let reader = new FileReader();
-                    reader.onload = async function(ev) { await db.ref(`customers/${uid}`).update({ foto: ev.target.result }); showToast('✅ Foto berhasil diupdate!'); renderCustomerAkun(document.getElementById('app')); };
-                    reader.readAsDataURL(e.target.files[0]);
+            let semuaRides = [];
+            let ridesSnap = await db.ref('rides').once('value');
+            if (ridesSnap.val()) { for (let cid in ridesSnap.val()) { for (let oid in ridesSnap.val()[cid]) { let ride = ridesSnap.val()[cid][oid]; if (ride && ride.driverId === uid) semuaRides.push(ride); } } }
+            let totalTripReal = semuaRides.length;
+            
+            let ratingsReceived = [];
+            let revSnap = await db.ref(`ratings_driver/${uid}`).once('value');
+            if (revSnap.val()) {
+                for (let [orderId, rev] of Object.entries(revSnap.val())) {
+                    ratingsReceived.push({ 
+                        rating: rev.rating, 
+                        review: rev.review, 
+                        dari: rev.customerName || 'Customer', 
+                        tanggal: new Date(rev.createdAt).toLocaleDateString('id-ID'), 
+                        orderId: orderId 
+                    });
                 }
-            };
-            input.click();
-        }
-        
-        function pilihFotoDriver() {
-            let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
-            input.onchange = function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    showToast('Mengupload foto...');
-                    let reader = new FileReader();
-                    reader.onload = async function(ev) { await db.ref(`drivers/${uid}`).update({ foto: ev.target.result }); showToast('✅ Foto berhasil diupdate!'); renderDriverAkun(document.getElementById('app')); };
-                    reader.readAsDataURL(e.target.files[0]);
-                }
-            };
-            input.click();
-        }
-        
-        async function editNamaCustomer() { let newName = prompt('Nama lengkap:', userData?.nama || ''); if (newName) { await db.ref(`customers/${uid}`).update({ nama: newName }); if (userData) userData.nama = newName; showToast('Nama diupdate'); renderCustomerAkun(document.getElementById('app')); } }
-        async function editDriver(field) { let newVal = prompt(`Edit ${field}:`); if (newVal) { await db.ref(`drivers/${uid}`).update({ [field]: newVal }); showToast('Data diupdate'); renderDriverAkun(document.getElementById('app')); } }
-        
-        async function renderDriverOrder(container) {
-            let snap = await db.ref('orders').once('value');
-            let orders = snap.val();
-            let pending = [];
-            if (orders) {
-                for (let id in orders) {
-                    let o = orders[id];
-                    if (o && (o.status === 'menunggu' || o.status === 'menunggu_konfirmasi')) {
-                        let offered = await db.ref(`offers/${uid}/${id}`).once('value');
-                        if (!offered.exists()) pending.push({ id, ...o });
+            }
+            
+            let ratingsGiven = [];
+            let givenSnap = await db.ref(`ratings_customer`).once('value');
+            if (givenSnap.val()) {
+                for (let customerId in givenSnap.val()) {
+                    for (let orderId in givenSnap.val()[customerId]) {
+                        let rev = givenSnap.val()[customerId][orderId];
+                        if (rev.driverId === uid) {
+                            let customerData = (await db.ref(`customers/${customerId}`).once('value')).val();
+                            ratingsGiven.push({ 
+                                rating: rev.rating, 
+                                review: rev.review, 
+                                kepada: customerData?.nama || 'Customer', 
+                                customerId: customerId,
+                                tanggal: new Date(rev.createdAt).toLocaleDateString('id-ID'), 
+                                orderId: orderId 
+                            });
+                        }
                     }
                 }
             }
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card driver-card">
-                    <h2><i class="fas fa-box"></i> Order Masuk</h2>
-                    ${pending.length === 0 ? '<p style="padding:40px;text-align:center">Tidak ada order</p>' : pending.map(o => `
-                        <div class="offer-card" id="orderCard-${o.id}">
-                            <div><strong>👤 ${o.customerNama}</strong> <span class="detail-text">(${o.jenis === 'khusus' ? 'Khusus' : 'Umum'})</span></div>
-                            <div class="detail-text">📍 Jemput: ${o.pickup}</div>
-                            <div class="detail-text">🎯 Tujuan: ${o.dropoff}</div>
-                            <div class="detail-text">⏰ Waktu: ${o.waktu}</div>
-                            <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-                                <input type="number" id="harga_${o.id}" placeholder="Harga tawaran (Rp)" class="input" style="flex:2; margin:0;">
-                                <button class="btn btn-success btn-sm" onclick="kirimHargaDriver('${o.id}')">Tawar</button>
-                                <button class="btn btn-danger btn-sm" onclick="tolakOrderDriver('${o.id}')">Tolak</button>
-                            </div>
-                            <div id="err_${o.id}" class="error hidden"></div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            
+            container.innerHTML = `${bottomNav()}<div class="card driver-card"><div class="profile-avatar-lg" onclick="pilihFotoDriver()">${data.foto ? `<img src="${data.foto}">` : '🏍️'}</div><div class="info-row"><span>Nama</span><span><strong>${data.nama || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#2196F3" onclick="editDriver('nama')"></i></span></div><div class="info-row"><span>Jenis Motor</span><span><strong>${data.jenisMotor || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#2196F3" onclick="editDriver('jenisMotor')"></i></span></div><div class="info-row"><span>Plat</span><span><strong>${data.plat || '-'}</strong> <i class="fas fa-edit" style="cursor:pointer;color:#2196F3" onclick="editDriver('plat')"></i></span></div><div class="info-row"><span>Email</span><span><strong>${userEmail}</strong></span></div><div class="info-row"><span>⭐ Rating</span><span><strong>${data.rating > 0 ? data.rating.toFixed(1) : '-'} ⭐</strong></span></div><div class="info-row"><span>Total Trip</span><span><strong>${totalTripReal} kali</strong></span></div></div>
+            <div class="card driver-card"><h3><i class="fas fa-star"></i> Rating yang Diterima dari Customer</h3>${ratingsReceived.length === 0 ? '<p class="detail-text">Belum ada rating</p>' : ratingsReceived.map(r => `<div class="rating-item"><div class="rating-stars">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div><div class="detail-text">Dari: ${r.dari}</div><div class="detail-text">${r.review || 'Tidak ada review'}</div><div class="detail-text">📅 ${r.tanggal}</div></div>`).join('')}</div>
+            <div class="card driver-card"><h3><i class="fas fa-pen"></i> Rating yang Diberikan ke Customer</h3>${ratingsGiven.length === 0 ? '<p class="detail-text">Belum memberikan rating</p>' : ratingsGiven.map(r => `<div class="rating-item"><div class="rating-stars">${'⭐'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div><div class="detail-text">Kepada: ${r.kepada}</div><div class="detail-text">${r.review || 'Tidak ada review'}</div><div class="detail-text">📅 ${r.tanggal}</div><button class="btn-edit-rating" onclick="editRating('${r.customerId}','${r.orderId}','customer',${r.rating},'${(r.review || '').replace(/'/g, "\\'")}')">✏️ Edit Rating</button></div>`).join('')}</div>`;
+        }
+        
+        function pilihFotoCustomer() { let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = function(e) { if (e.target.files && e.target.files[0]) { showToast('Mengupload foto...'); let reader = new FileReader(); reader.onload = async function(ev) { await db.ref(`customers/${uid}`).update({ foto: ev.target.result }); showToast('✅ Foto berhasil diupdate!'); renderCustomerAkun(document.getElementById('app')); }; reader.readAsDataURL(e.target.files[0]); } }; input.click(); }
+        function pilihFotoDriver() { let input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = function(e) { if (e.target.files && e.target.files[0]) { showToast('Mengupload foto...'); let reader = new FileReader(); reader.onload = async function(ev) { await db.ref(`drivers/${uid}`).update({ foto: ev.target.result }); showToast('✅ Foto berhasil diupdate!'); renderDriverAkun(document.getElementById('app')); }; reader.readAsDataURL(e.target.files[0]); } }; input.click(); }
+        async function editNamaCustomer() { let newName = prompt('Nama lengkap:', userData?.nama || ''); if (newName) { await db.ref(`customers/${uid}`).update({ nama: newName }); if (userData) userData.nama = newName; showToast('Nama diupdate'); renderCustomerAkun(document.getElementById('app')); } }
+        async function editDriver(field) { let newVal = prompt(`Edit ${field}:`); if (newVal) { await db.ref(`drivers/${uid}`).update({ [field]: newVal }); showToast('Data diupdate'); renderDriverAkun(document.getElementById('app')); } }
+
+        async function renderDriverOrder(container) {
+            let snap = await db.ref('orders').once('value'), orders = snap.val(), pending = [];
+            if (orders) { 
+                for (let id in orders) { 
+                    let o = orders[id];
+                    if (o && (o.status === 'menunggu' || o.status === 'menunggu_konfirmasi')) {
+                        if (o.jenis === 'khusus' && o.targetDriver !== uid) continue;
+                        let offered = await db.ref(`offers/${uid}/${id}`).once('value');
+                        if (!offered.exists()) pending.push({ id, ...o });
+                    } 
+                } 
+            }
+            container.innerHTML = `${bottomNav()}<div class="card driver-card"><h2><i class="fas fa-box"></i> Order Masuk</h2>${pending.length === 0 ? '<p style="padding:40px;text-align:center">Tidak ada order</p>' : pending.map(o => `<div class="offer-card" id="orderCard-${o.id}"><div><strong>👤 ${o.customerNama}</strong> <span class="detail-text">(${o.jenis === 'khusus' ? 'Khusus' : 'Umum'})</span></div><div class="detail-text">📍 Jemput: ${o.pickup}</div><div class="detail-text">🎯 Tujuan: ${o.dropoff}</div><div class="detail-text">⏰ Waktu: ${o.waktu}</div><div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;"><input type="number" id="harga_${o.id}" placeholder="Harga tawaran (Rp)" class="input" style="flex:2; margin:0; padding:8px;"><button class="btn btn-success btn-sm" onclick="kirimHargaDriver('${o.id}')">Tawar</button><button class="btn btn-danger btn-sm" onclick="tolakOrderDriver('${o.id}')">Tolak</button></div><div id="err_${o.id}" class="error hidden"></div></div>`).join('')}</div>`;
         }
         
         async function kirimHargaDriver(orderId) {
-            let priceInput = document.getElementById(`harga_${orderId}`);
-            let price = priceInput?.value;
-            let errDiv = document.getElementById(`err_${orderId}`);
+            let priceInput = document.getElementById(`harga_${orderId}`), price = priceInput?.value, errDiv = document.getElementById(`err_${orderId}`);
             if (!price) { if (errDiv) { errDiv.innerText = 'Isi harga!'; errDiv.classList.remove('hidden'); } return; }
             try {
                 let order = (await db.ref(`orders/${orderId}`).once('value')).val();
@@ -1406,54 +1418,29 @@
                 await db.ref(`orders/${orderId}`).update({ status: 'menunggu_konfirmasi' });
                 await db.ref(`offers/${uid}/${orderId}`).set(true);
                 showToast(`✅ Tawaran Rp ${parseInt(price).toLocaleString()} terkirim`);
-                let orderCard = document.getElementById(`orderCard-${orderId}`);
-                if (orderCard) orderCard.remove();
+                document.getElementById(`orderCard-${orderId}`)?.remove();
             } catch(e) { showToast('Gagal: ' + e.message, true); }
         }
         
-        async function tolakOrderDriver(orderId) {
-            if (confirm('Tolak order ini?')) {
-                await db.ref(`orders/${orderId}`).remove();
-                showToast('Order ditolak');
-                document.getElementById(`orderCard-${orderId}`)?.remove();
-            }
-        }
-        
+        async function tolakOrderDriver(orderId) { if (confirm('Tolak order ini?')) { await db.ref(`orders/${orderId}`).remove(); showToast('Order ditolak'); document.getElementById(`orderCard-${orderId}`)?.remove(); } }
+
         async function renderDriverCari(container) {
             let customers = [];
             let snap = await db.ref('customers').once('value');
             snap.forEach(child => { let c = child.val(); if (c) customers.push({ id: child.key, ...c }); });
-            container.innerHTML = `
-                ${bottomNav()}
-                <div class="card driver-card">
-                    <h2><i class="fas fa-search"></i> Cari Customer</h2>
-                    <div class="search-box"><i class="fas fa-search"></i><input type="text" id="cariCustomer" placeholder="Cari nama..." class="input"></div>
-                    <div id="customerList">${customers.map(c => `<div class="driver-item" onclick="showInfoCustomer2('${c.id}')"><div class="avatar">${c.foto ? `<img src="${c.foto}">` : '👤'}</div><div class="info-text"><div class="name-text">${c.nama || 'Customer'}</div><div class="detail-text">⭐ ${c.rating || 0} | 📧 ${c.email || '-'}</div></div></div>`).join('')}</div>
-                </div>
-            `;
-            document.getElementById('cariCustomer')?.addEventListener('input', (e) => {
-                let q = e.target.value.toLowerCase();
-                let filtered = customers.filter(c => (c.nama || '').toLowerCase().includes(q));
-                document.getElementById('customerList').innerHTML = filtered.map(c => `<div class="driver-item" onclick="showInfoCustomer2('${c.id}')"><div class="avatar">${c.foto ? `<img src="${c.foto}">` : '👤'}</div><div class="info-text"><div class="name-text">${c.nama || 'Customer'}</div><div class="detail-text">⭐ ${c.rating || 0} | 📧 ${c.email || '-'}</div></div></div>`).join('');
-            });
+            container.innerHTML = `${bottomNav()}<div class="card driver-card"><h2><i class="fas fa-search"></i> Cari Customer</h2><div class="search-box"><i class="fas fa-search"></i><input type="text" id="cariCustomer" placeholder="Cari nama..." class="input"></div><div id="customerList">${customers.map(c => `<div class="driver-item" onclick="showInfoCustomer2('${c.id}')"><div class="avatar">${c.foto ? `<img src="${c.foto}">` : '👤'}</div><div class="info-text"><div class="name-text">${c.nama || 'Customer'}</div><div class="detail-text">⭐ ${c.rating || 0} | 📧 ${c.email || '-'}</div></div></div>`).join('')}</div></div>`;
+            document.getElementById('cariCustomer')?.addEventListener('input', (e) => { let q = e.target.value.toLowerCase(); let filtered = customers.filter(c => (c.nama || '').toLowerCase().includes(q)); document.getElementById('customerList').innerHTML = filtered.map(c => `<div class="driver-item" onclick="showInfoCustomer2('${c.id}')"><div class="avatar">${c.foto ? `<img src="${c.foto}">` : '👤'}</div><div class="info-text"><div class="name-text">${c.nama || 'Customer'}</div><div class="detail-text">⭐ ${c.rating || 0} | 📧 ${c.email || '-'}</div></div></div>`).join(''); });
         }
         
         async function showInfoCustomer2(custId) {
             let c = (await db.ref(`customers/${custId}`).once('value')).val();
             let rides = await db.ref(`rides/${custId}`).once('value');
             let totalRides = rides.val() ? Object.values(rides.val()).length : 0;
-            document.getElementById('infoModalContent').innerHTML = `
-                <div class="infoModal-avatar">${c.foto ? `<img src="${c.foto}">` : '👤'}</div>
-                <h3>Informasi Customer</h3>
-                <div class="infoModal-item"><span>Nama</span><span>${c.nama || '-'}</span></div>
-                <div class="infoModal-item"><span>Email</span><span>${c.email || '-'}</span></div>
-                <div class="infoModal-item"><span>⭐ Rating</span><span>${c.rating > 0 ? c.rating.toFixed(1) : '-'} ⭐</span></div>
-                <div class="infoModal-item"><span>Total Perjalanan</span><span>${totalRides} kali</span></div>
-                <button class="btn btn-primary" onclick="closeInfoModal()">Tutup</button>
-            `;
+            document.getElementById('infoModalContent').innerHTML = `<div class="infoModal-avatar">${c.foto ? `<img src="${c.foto}">` : '👤'}</div><h3 style="font-size:14px;">Informasi Customer</h3><div class="infoModal-item"><span>Nama</span><span>${c.nama || '-'}</span></div><div class="infoModal-item"><span>Email</span><span>${c.email || '-'}</span></div><div class="infoModal-item"><span>⭐ Rating</span><span>${c.rating > 0 ? c.rating.toFixed(1) : '-'} ⭐</span></div><div class="infoModal-item"><span>Total Perjalanan</span><span>${totalRides} kali</span></div><button class="btn btn-primary btn-sm" onclick="closeInfoModal()" style="margin-top:8px;">Tutup</button>`;
             document.getElementById('infoModal').style.display = 'flex';
         }
-        
+
+        // GLOBAL FUNCTIONS
         window.pilihRole = pilihRole;
         window.doLogin = doLogin;
         window.doRegister = doRegister;
@@ -1463,8 +1450,8 @@
         window.buatOrderUmum = buatOrderUmum;
         window.setTab = setTab;
         window.setSort = setSort;
-        window.hapusTawaran = hapusTawaran;
         window.terimaTawaran = terimaTawaran;
+        window.tolakTawaranDriver = tolakTawaranDriver;
         window.kirimHargaDriver = kirimHargaDriver;
         window.tolakOrderDriver = tolakOrderDriver;
         window.editNamaCustomer = editNamaCustomer;
@@ -1476,11 +1463,12 @@
         window.selesaikanPerjalananDriver = selesaikanPerjalananDriver;
         window.gantiTahunStatistik = gantiTahunStatistik;
         window.gantiTahunDriverStatistik = gantiTahunDriverStatistik;
-        window.downloadStatistikCustomer = downloadStatistikCustomer;
-        window.downloadStatistikDriver = downloadStatistikDriver;
+        window.downloadStatistikCustomerPDF = downloadStatistikCustomerPDF;
+        window.downloadStatistikDriverPDF = downloadStatistikDriverPDF;
         window.goTo = goTo;
         window.showInfoDriver = showInfoDriver;
         window.showInfoCustomer2 = showInfoCustomer2;
+        window.editRating = editRating;
         
         renderPage();
     </script>
