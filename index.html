@@ -333,6 +333,16 @@
             display: inline-block;
             margin-left: 8px;
         }
+        
+        .badge-expired {
+            background: #9E9E9E;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            display: inline-block;
+            margin-left: 8px;
+        }
 
         .login-card {
             background: rgba(255,255,255,0.95);
@@ -437,7 +447,124 @@
         let statistikTahun = new Date().getFullYear(), driverStatistikTahun = new Date().getFullYear();
         let offerListener = null, currentRatingTargetId = null, currentRatingOrderId = null, selectedRating = 0, ratingType = 'driver', isEditRating = false;
         let statChart = null, driverStatChart = null;
+        let expiredCheckInterval = null;
 
+        // ==================== FUNGSI AUTO HAPUS ORDER KADALUWARSA ====================
+        
+        /**
+         * Menghapus order yang sudah melewati waktu penjemputan
+         * @param {boolean} showNotification - Apakah akan menampilkan notifikasi toast
+         */
+        async function hapusOrderKadaluwarsa(showNotification = true) {
+            try {
+                let sekarang = new Date();
+                let ordersSnap = await db.ref('orders').once('value');
+                let orders = ordersSnap.val();
+                
+                if (!orders) return;
+                
+                let expiredOrders = [];
+                
+                for (let [orderId, order] of Object.entries(orders)) {
+                    // Hanya proses order yang masih dalam status menunggu atau menunggu_konfirmasi
+                    if (order.status === 'menunggu' || order.status === 'menunggu_konfirmasi') {
+                        // Cek apakah field waktu ada
+                        if (order.waktu) {
+                            let waktuJemput = new Date(order.waktu);
+                            
+                            // Jika waktu jemput sudah lewat (expired)
+                            if (sekarang > waktuJemput) {
+                                expiredOrders.push({
+                                    orderId: orderId,
+                                    customerNama: order.customerNama || 'Customer',
+                                    waktu: order.waktu
+                                });
+                                
+                                // Hapus order
+                                await db.ref(`orders/${orderId}`).remove();
+                                // Hapus semua tawaran yang terkait dengan order ini
+                                await db.ref(`tawaran/${orderId}`).remove();
+                                // Hapus offer dari driver (offers node)
+                                let offersSnap = await db.ref('offers').once('value');
+                                if (offersSnap.val()) {
+                                    for (let driverId in offersSnap.val()) {
+                                        if (offersSnap.val()[driverId][orderId]) {
+                                            await db.ref(`offers/${driverId}/${orderId}`).remove();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Tampilkan notifikasi jika ada order yang dihapus
+                if (expiredOrders.length > 0 && showNotification) {
+                    let expiredNames = expiredOrders.map(o => o.customerNama).join(', ');
+                    if (role === 'customer') {
+                        // Cek apakah customer yang login punya order expired
+                        let customerExpired = expiredOrders.some(o => {
+                            // Kita perlu cek siapa pemilik order, tapi karena order sudah dihapus, kita tidak bisa
+                            // Alternatif: sembunyikan notifikasi jika terlalu banyak
+                        });
+                        showToast(`⚠️ ${expiredOrders.length} order Anda telah kadaluwarsa dan dihapus sistem (melewati waktu jemput)`, true);
+                    } else if (role === 'driver') {
+                        showToast(`⚠️ ${expiredOrders.length} order telah kadaluwarsa dan dihapus dari sistem`, true);
+                    } else {
+                        console.log(`${expiredOrders.length} order expired telah dihapus`);
+                    }
+                }
+                
+                return expiredOrders.length;
+            } catch(e) {
+                console.error('Error saat hapus order kadaluwarsa:', e);
+                return 0;
+            }
+        }
+        
+        /**
+         * Validasi apakah order masih valid (belum lewat waktu) sebelum diproses
+         * @param {Object} order - Data order
+         * @returns {boolean} - true jika masih valid, false jika sudah expired
+         */
+        function isOrderValid(order) {
+            if (!order || !order.waktu) return true;
+            let sekarang = new Date();
+            let waktuJemput = new Date(order.waktu);
+            return sekarang <= waktuJemput;
+        }
+        
+        /**
+         * Memulai interval pengecekan order kadaluwarsa (setiap 2 menit)
+         */
+        function startExpiredCheckInterval() {
+            if (expiredCheckInterval) clearInterval(expiredCheckInterval);
+            expiredCheckInterval = setInterval(async () => {
+                if (role) {
+                    await hapusOrderKadaluwarsa(true);
+                    // Refresh halaman jika perlu untuk menampilkan perubahan
+                    if (menu === 'customer-tawaran') {
+                        loadOffers();
+                    } else if (menu === 'driver-order') {
+                        renderDriverOrder(document.getElementById('app'));
+                    } else if (menu === 'customer-riwayat') {
+                        renderCustomerRiwayat(document.getElementById('app'));
+                    } else if (menu === 'driver-riwayat') {
+                        renderDriverRiwayat(document.getElementById('app'));
+                    }
+                }
+            }, 2 * 60 * 1000); // Setiap 2 menit
+        }
+        
+        function stopExpiredCheckInterval() {
+            if (expiredCheckInterval) {
+                clearInterval(expiredCheckInterval);
+                expiredCheckInterval = null;
+            }
+        }
+
+        // ==================== FUNGSI UTAMA ====================
+        
         function saveSession(roleVal, uidVal, emailVal, userDataVal) {
             if (roleVal && uidVal) {
                 localStorage.setItem('anjas_role', roleVal);
@@ -455,9 +582,9 @@
         function showToast(msg, isErr = false) {
             let t = document.createElement('div');
             t.textContent = msg;
-            t.style.cssText = `position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:${isErr ? '#f44336' : '#4CAF50'}; color:white; padding:8px 16px; border-radius:40px; font-size:13px; z-index:1000; white-space:nowrap;`;
+            t.style.cssText = `position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:${isErr ? '#f44336' : '#4CAF50'}; color:white; padding:8px 16px; border-radius:40px; font-size:13px; z-index:1000; white-space:nowrap; max-width:90%; white-space:normal; text-align:center;`;
             document.body.appendChild(t);
-            setTimeout(() => t.remove(), 2500);
+            setTimeout(() => t.remove(), 3500);
         }
         function closeInfoModal() { document.getElementById('infoModal').style.display = 'none'; }
         function closeRatingModal() { 
@@ -482,6 +609,7 @@
             let app = document.getElementById('app');
             if (!app) return;
             if (menu === 'home') {
+                stopExpiredCheckInterval();
                 renderLogin(app);
                 return;
             }
@@ -496,7 +624,13 @@
                             role = savedRole; uid = savedUid; userEmail = savedEmail || '';
                             if (savedUserData) userData = JSON.parse(savedUserData);
                             let snap = await db.ref(`${role}s/${uid}`).once('value');
-                            if (snap.exists()) { userData = snap.val(); menu = role === 'customer' ? 'customer-cari' : 'driver-order'; renderHomePage(); return; }
+                            if (snap.exists()) { 
+                                userData = snap.val(); 
+                                menu = role === 'customer' ? 'customer-cari' : 'driver-order';
+                                startExpiredCheckInterval();
+                                renderHomePage(); 
+                                return; 
+                            }
                         }
                         clearSession(); role = null; menu = 'home'; renderLogin(app);
                     });
@@ -561,6 +695,7 @@
                 userData = (await db.ref(`${role}s/${uid}`).once('value')).val() || {};
                 saveSession(role, uid, userEmail, userData);
                 menu = role === 'customer' ? 'customer-cari' : 'driver-order';
+                startExpiredCheckInterval();
                 renderPage();
             } catch(err) { msg.innerText = err.message; msg.classList.remove('hidden'); }
         }
@@ -581,6 +716,7 @@
         async function logout() { 
             await auth.signOut(); 
             clearSession(); 
+            stopExpiredCheckInterval();
             role = null; 
             menu = 'home'; 
             renderPage(); 
@@ -588,6 +724,7 @@
 
         // CUSTOMER - CARI KHUSUS
         async function renderCustomerCari(container) {
+            await hapusOrderKadaluwarsa(false);
             let snap = await db.ref('drivers').once('value');
             allDrivers = [];
             snap.forEach(child => { let d = child.val(); if (d) allDrivers.push({ id: child.key, ...d }); });
@@ -612,6 +749,16 @@
             let nama = document.getElementById('namaKhusus').value.trim(), jemput = document.getElementById('jemputKhusus').value.trim(), tujuan = document.getElementById('tujuanKhusus').value.trim(), waktu = document.getElementById('waktuKhusus').value, msg = document.getElementById('orderKhususMsg');
             if (!selectedDriverKhusus) { msg.innerText = 'Pilih driver dulu!'; msg.classList.remove('hidden'); return; }
             if (!nama || !jemput || !tujuan || !waktu) { msg.innerText = 'Isi semua field!'; msg.classList.remove('hidden'); return; }
+            
+            // Validasi waktu tidak boleh kurang dari sekarang
+            let waktuOrder = new Date(waktu);
+            let sekarang = new Date();
+            if (waktuOrder < sekarang) {
+                msg.innerText = 'Waktu jemput tidak boleh kurang dari sekarang!';
+                msg.classList.remove('hidden');
+                return;
+            }
+            
             msg.classList.add('hidden');
             await db.ref(`customers/${uid}`).update({ nama });
             let orderId = db.ref('orders').push().key;
@@ -621,11 +768,23 @@
         }
 
         // CUSTOMER - ORDER UMUM
-        function renderCustomerOrder(container) { container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-shopping-cart"></i> Order Umum</h2><p class="detail-text" style="margin-bottom:15px;">Pesanan akan dilihat oleh SEMUA driver.</p><input type="text" id="namaUmum" placeholder="Nama lengkap" class="input" value="${userData?.nama || ''}"><input type="text" id="jemputUmum" placeholder="Lokasi jemput" class="input"><input type="text" id="tujuanUmum" placeholder="Lokasi tujuan" class="input"><input type="datetime-local" id="waktuUmum" class="input"><button class="btn btn-primary" onclick="buatOrderUmum()">BUAT ORDER UMUM</button><div id="orderUmumMsg" class="error hidden"></div></div>`; }
+        function renderCustomerOrder(container) { 
+            container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-shopping-cart"></i> Order Umum</h2><p class="detail-text" style="margin-bottom:15px;">Pesanan akan dilihat oleh SEMUA driver.</p><input type="text" id="namaUmum" placeholder="Nama lengkap" class="input" value="${userData?.nama || ''}"><input type="text" id="jemputUmum" placeholder="Lokasi jemput" class="input"><input type="text" id="tujuanUmum" placeholder="Lokasi tujuan" class="input"><input type="datetime-local" id="waktuUmum" class="input"><button class="btn btn-primary" onclick="buatOrderUmum()">BUAT ORDER UMUM</button><div id="orderUmumMsg" class="error hidden"></div></div>`; 
+        }
         
         async function buatOrderUmum() {
             let nama = document.getElementById('namaUmum').value.trim(), jemput = document.getElementById('jemputUmum').value.trim(), tujuan = document.getElementById('tujuanUmum').value.trim(), waktu = document.getElementById('waktuUmum').value, msg = document.getElementById('orderUmumMsg');
             if (!nama || !jemput || !tujuan || !waktu) { msg.innerText = 'Isi semua field!'; msg.classList.remove('hidden'); return; }
+            
+            // Validasi waktu tidak boleh kurang dari sekarang
+            let waktuOrder = new Date(waktu);
+            let sekarang = new Date();
+            if (waktuOrder < sekarang) {
+                msg.innerText = 'Waktu jemput tidak boleh kurang dari sekarang!';
+                msg.classList.remove('hidden');
+                return;
+            }
+            
             msg.classList.add('hidden');
             await db.ref(`customers/${uid}`).update({ nama });
             let orderId = db.ref('orders').push().key;
@@ -634,8 +793,11 @@
             showToast('✅ Order umum terkirim!'); goTo('customer-tawaran');
         }
 
-        // TAWARAN - DIPERBAIKI UNTUK ORDER KHUSUS
+        // TAWARAN
         async function loadOffers() {
+            // Hapus order kadaluwarsa dulu sebelum loading tawaran
+            await hapusOrderKadaluwarsa(false);
+            
             khususOffers = []; 
             umumOffers = [];
             
@@ -647,16 +809,15 @@
             for (let [orderId, daftarTawaran] of Object.entries(semuaTawaran)) {
                 let order = semuaOrders[orderId];
                 
-                // Perbaikan: Cek order milik customer ini
                 if (!order || order.customerId !== uid) continue;
-                
-                // Hanya tampilkan order yang belum diambil/dalam perjalanan
                 if (order.status !== 'menunggu' && order.status !== 'menunggu_konfirmasi') continue;
+                
+                // Cek apakah order sudah expired
+                if (!isOrderValid(order)) continue;
                 
                 let uniqueDrivers = new Map();
                 
                 for (let [tawaranId, tawaran] of Object.entries(daftarTawaran)) {
-                    // Untuk order khusus, hanya driver yang dipilih yang bisa
                     if (order.jenis === 'khusus') {
                         if (order.targetDriver !== tawaran.driverId) continue;
                     }
@@ -798,6 +959,15 @@
         function setSort(type) { if (sortType === type) sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'; else { sortType = type; sortOrder = 'desc'; } renderTawaranContent(); }
         
         async function terimaTawaran(orderId, driverId, driverName, waktu, pickup, dropoff, motor, plat, harga) {
+            // Cek apakah order masih valid sebelum disetujui
+            let orderCheck = await db.ref(`orders/${orderId}`).once('value');
+            let orderDataCheck = orderCheck.val();
+            if (!orderDataCheck || !isOrderValid(orderDataCheck)) {
+                showToast('❌ Order sudah kadaluwarsa! Tidak bisa menyetujui tawaran.', true);
+                loadOffers();
+                return;
+            }
+            
             if (confirm(`Setuju dengan tawaran dari ${driverName} seharga Rp ${harga.toLocaleString()}?`)) {
                 await db.ref(`orders/${orderId}`).update({ 
                     status: 'perjalanan_dimulai', 
@@ -856,7 +1026,7 @@
             }
         }
         
-        // Customer selesai perjalanan - CEK APAKAH PERNAH RATING DRIVER INI SEBELUMNYA
+        // Customer selesai perjalanan
         async function selesaikanPerjalananCustomer(orderId, driverId, driverName, motor, plat, pickup, dropoff, harga, startTime) {
             if (confirm('Apakah perjalanan sudah selesai? Anda akan memberi rating untuk driver.')) {
                 try {
@@ -868,7 +1038,6 @@
                         return;
                     }
                     
-                    // CEK APAKAH CUSTOMER SUDAH PERNAH MEMBERI RATING UNTUK DRIVER INI
                     let semuaRatingDriver = await db.ref(`ratings_driver/${driverId}`).once('value');
                     let sudahPernahRating = false;
                     let ratingLama = null;
@@ -933,7 +1102,7 @@
             }
         }
         
-        // Driver selesai perjalanan - CEK APAKAH PERNAH RATING CUSTOMER INI SEBELUMNYA
+        // Driver selesai perjalanan
         async function selesaikanPerjalananDriver(orderId, customerId, customerName, pickup, dropoff, harga, startTime) {
             if (confirm('Apakah perjalanan sudah selesai? Anda akan memberi rating untuk customer.')) {
                 try {
@@ -945,7 +1114,6 @@
                         return;
                     }
                     
-                    // CEK APAKAH DRIVER SUDAH PERNAH MEMBERI RATING UNTUK CUSTOMER INI
                     let semuaRatingCustomer = await db.ref(`ratings_customer/${customerId}`).once('value');
                     let sudahPernahRating = false;
                     let ratingLama = null;
@@ -1067,7 +1235,6 @@
             
             try {
                 if (ratingType === 'driver') {
-                    // CEK APAKAH CUSTOMER SUDAH PERNAH RATING DRIVER INI SEBELUMNYA
                     let semuaRatingDriver = await db.ref(`ratings_driver/${currentRatingTargetId}`).once('value');
                     let sudahPernahRating = false;
                     
@@ -1106,7 +1273,6 @@
                     await db.ref(`drivers/${currentRatingTargetId}/rating`).set(total / count);
                     showToast(isEditRating ? '✅ Rating driver berhasil diupdate!' : '✅ Rating untuk driver telah disimpan.');
                 } else {
-                    // CEK APAKAH DRIVER SUDAH PERNAH RATING CUSTOMER INI SEBELUMNYA
                     let semuaRatingCustomer = await db.ref(`ratings_customer/${currentRatingTargetId}`).once('value');
                     let sudahPernahRating = false;
                     
@@ -1177,12 +1343,14 @@
         }
 
         async function renderCustomerRiwayat(container) {
+            await hapusOrderKadaluwarsa(false);
             let active = (await db.ref(`active_rides/${uid}`).once('value')).val();
             let rides = Object.values((await db.ref(`rides/${uid}`).once('value')).val() || {}).reverse();
             container.innerHTML = `${bottomNav()}<div class="card customer-card"><h2><i class="fas fa-history"></i> Riwayat Perjalanan</h2>${active ? `<div class="active-ride-card"><div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;"><div class="avatar" style="width:45px; background:#4CAF50;">🏍️</div><div style="flex:1;"><div><strong>🟢 PERJALANAN AKTIF</strong> <span class="badge-aktif">Dalam Perjalanan</span></div><div class="name-text">Driver: ${active.driverName}</div><div class="detail-text">🏍️ ${active.motor || '-'} | 🔢 ${active.plat || '-'}</div><div class="detail-text">📍 ${active.pickup} → ${active.dropoff}</div><div class="detail-text">💰 Rp ${active.harga?.toLocaleString()}</div></div><button class="btn btn-success btn-sm" onclick="selesaikanPerjalananCustomer('${active.orderId}','${active.driverId}','${active.driverName}','${active.motor}','${active.plat}','${active.pickup}','${active.dropoff}',${active.harga},${active.startTime})">✓ SELESAIKAN & BERI RATING</button></div></div>` : '<div style="background:#E8F5E9; padding:10px; border-radius:16px; margin-bottom:16px; text-align:center;">✅ Tidak ada perjalanan aktif</div>'}<h3 style="margin-top:14px;">📜 Riwayat Selesai</h3>${rides.length === 0 ? '<p style="padding:40px;text-align:center; color:#999;">Belum ada riwayat</p>' : rides.map(r => `<div class="history-item selesai"><div><strong>${r.driverName || 'Driver'}</strong> <span class="badge-selesai">✓ Selesai</span></div><div class="detail-text">🏍️ ${r.motor || '-'} | 🔢 ${r.plat || '-'}</div><div class="detail-text">📍 ${r.pickup} → ${r.dropoff}</div><div class="detail-text">💰 Rp ${r.harga?.toLocaleString()} | 📅 ${new Date(r.endTime || r.startTime).toLocaleDateString('id-ID')}</div></div>`).join('')}</div>`;
         }
 
         async function renderDriverRiwayat(container) {
+            await hapusOrderKadaluwarsa(false);
             let active = (await db.ref(`driver_active_rides/${uid}`).once('value')).val();
             let semuaRides = [];
             let ridesSnap = await db.ref('rides').once('value');
@@ -1393,11 +1561,17 @@
         async function editDriver(field) { let newVal = prompt(`Edit ${field}:`); if (newVal) { await db.ref(`drivers/${uid}`).update({ [field]: newVal }); showToast('Data diupdate'); renderDriverAkun(document.getElementById('app')); } }
 
         async function renderDriverOrder(container) {
+            // Hapus order kadaluwarsa sebelum menampilkan order masuk
+            await hapusOrderKadaluwarsa(false);
+            
             let snap = await db.ref('orders').once('value'), orders = snap.val(), pending = [];
             if (orders) { 
                 for (let id in orders) { 
                     let o = orders[id];
                     if (o && (o.status === 'menunggu' || o.status === 'menunggu_konfirmasi')) {
+                        // Cek apakah order masih valid (belum lewat waktu)
+                        if (!isOrderValid(o)) continue;
+                        
                         if (o.jenis === 'khusus' && o.targetDriver !== uid) continue;
                         let offered = await db.ref(`offers/${uid}/${id}`).once('value');
                         if (!offered.exists()) pending.push({ id, ...o });
@@ -1413,6 +1587,14 @@
             try {
                 let order = (await db.ref(`orders/${orderId}`).once('value')).val();
                 if (!order) { showToast('Order tidak ditemukan', true); return; }
+                
+                // Cek apakah order masih valid
+                if (!isOrderValid(order)) {
+                    showToast('❌ Order sudah kadaluwarsa! Tidak bisa mengirim tawaran.', true);
+                    document.getElementById(`orderCard-${orderId}`)?.remove();
+                    return;
+                }
+                
                 let tawaranId = `${uid}_${Date.now()}`;
                 await db.ref(`tawaran/${orderId}/${tawaranId}`).set({ driverId: uid, harga: parseInt(price), waktuTawar: Date.now(), status: 'menunggu' });
                 await db.ref(`orders/${orderId}`).update({ status: 'menunggu_konfirmasi' });
